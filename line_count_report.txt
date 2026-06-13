@@ -1,0 +1,19 @@
+File | Lines | Non-empty lines
+--- | ---: | ---:
+.gitignore | 24 | 18
+MANIFEST.in | 5 | 4
+requirements.txt | 2 | 2
+pyproject.toml | 38 | 37
+setup.cfg | 34 | 31
+setup.py | 134 | 130
+backtesting/__init__.py | 95 | 71
+backtesting/backtesting.py | 1750 | 1466
+backtesting/lib.py | 646 | 530
+backtesting/_util.py | 337 | 273
+backtesting/_stats.py | 212 | 181
+backtesting/_plotting.py | 785 | 676
+backtesting/autoscale_cb.js | 35 | 29
+backtesting/test/__init__.py | 29 | 18
+backtesting/test/__main__.py | 7 | 5
+backtesting/test/_test.py | 1179 | 975
+TOTAL | 5312 | 4446

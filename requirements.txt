@@ -1,2 +1,12 @@
 # To run example notebooks, install required and test dependencies
+# ============================================================
+# requirements.txt — pip 依赖安装入口
+# 上下文层：在开发/课程复现环境中使用 `pip install -r requirements.txt`
+#           一键安装 backtesting 包（可编辑模式）及其 test 额外依赖。
+# 设计层：`.[test]` 是 pip 的"当前目录安装+extras"语法：
+#           - `.` 表示从当前目录（setup.py/pyproject.toml）安装
+#           - `[test]` 表示同时安装 extras_require 中定义的 test 依赖
+# 功能层：安装 backtesting 核心依赖（numpy, pandas, bokeh）
+#          以及 test 可选依赖（matplotlib, scikit-learn 等）。
+# ============================================================
 .[test]

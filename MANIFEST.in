@@ -1,5 +1,20 @@
+# ============================================================
+# MANIFEST.in — 源码分发包（sdist）文件清单
+# 上下文层：配合 setup.py 使用，控制 `python -m build` 或
+#           `pip install` 打包时需要包含/排除哪些文件。
+#           只影响 sdist（tar.gz），不影响 wheel（.whl）。
+# 设计层：MANIFEST.in 使用 setuptools 约定的指令语法，
+#          每条指令一行，支持通配符。
+# ============================================================
+
+# 功能层：排除本文件自身，不打包 MANIFEST.in 到分发中
 exclude MANIFEST.in
+
+# 功能层：排除所有以 . 开头的隐藏文件（如 .gitignore、.codecov.yml 等）
 exclude .*
 
+# 功能层：递归排除所有以 . 开头的隐藏文件（已从上层目录覆盖到子目录）
 recursive-exclude .* *
+
+# 功能层：递归排除 doc/ 目录下的全部内容（文档站已从课程分支删除）
 recursive-exclude doc *
