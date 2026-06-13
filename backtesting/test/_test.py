@@ -1,3 +1,16 @@
+# ============================================================
+# backtesting/test/_test.py — Backtesting.py 完整测试套件
+# ============================================================
+# 上下文层：本模块包含对 Backtesting.py 框架的全面测试。
+#           运行方式：python -m backtesting.test
+#           测试覆盖：回测执行、订单撮合、佣金计算、参数优化、
+#           图表绘制、统计指标、工具函数和回归防护。
+# 设计层：Python 标准库 unittest 框架，按功能分 8 个 TestCase 子类：
+#           TestBacktest（引擎）、TestStrategy（策略）、TestOptimize（优化）、
+#           TestPlot（绘图）、TestLib（工具库）、TestUtil（基础设施）、
+#           TestDocs（文档）、TestRegressions（回归防护）。
+# ============================================================
+
 import inspect
 import multiprocessing as mp
 import os
@@ -33,6 +46,7 @@ from backtesting.lib import (
 )
 from backtesting.test import BTCUSD, EURUSD, GOOG, SMA
 
+# 功能层：截取前 20 行数据——避免指标预热期，实现快速测试
 SHORT_DATA = GOOG.iloc[:20]  # Short data for fast tests with no indicator lag
 
 
@@ -77,6 +91,9 @@ class _S(Strategy):
         super().init()
 
 
+# ============================================================
+# TestBacktest —— 回测引擎：基本运行、数据验证、佣金和订单
+# ============================================================
 class TestBacktest(TestCase):
     def test_run(self):
         bt = Backtest(EURUSD, SmaCross)
@@ -468,7 +485,11 @@ class TestBacktest(TestCase):
         self.assertRaises(ValueError, Backtest(SHORT_DATA, S, spread=.02).run)
 
 
+# ============================================================
+# TestStrategy —— 策略机制：仓位、对冲、exclusive_orders、tag
+# ============================================================
 class TestStrategy(TestCase):
+    # 辅助方法：使用 Python 生成器协程模拟策略的逐步执行
     @staticmethod
     def _Backtest(strategy_coroutine, data=SHORT_DATA, **kwargs):
         class S(Strategy):
@@ -575,6 +596,9 @@ class TestStrategy(TestCase):
         self.assertEqual(list(stats._trades.Tag), [1, 1, 2])
 
 
+# ============================================================
+# TestOptimize —— 参数优化：网格搜索、SAMBO、约束、热力图
+# ============================================================
 class TestOptimize(TestCase):
     def test_optimize(self):
         bt = Backtest(GOOG.iloc[:100], SmaCross)
@@ -659,6 +683,9 @@ class TestOptimize(TestCase):
         self.assertLess(end - start, .3 + handicap)
 
 
+# ============================================================
+# TestPlot —— 图表绘制：HTML 输出、参数组合、时间分辨率、指标显示
+# ============================================================
 class TestPlot(TestCase):
     def test_plot_before_run(self):
         bt = Backtest(GOOG, SmaCross)
@@ -852,6 +879,9 @@ class TestPlot(TestCase):
                     open_browser=False)
 
 
+# ============================================================
+# TestLib —— lib.py 工具库：信号函数、重采样、SignalStrategy、TrailingStrategy
+# ============================================================
 class TestLib(TestCase):
     def test_barssince(self):
         self.assertEqual(barssince(np.r_[1, 0, 0]), 2)
@@ -983,6 +1013,9 @@ class TestLib(TestCase):
         plot_heatmaps(heatmap.mean(axis=1), open_browser=False)
 
 
+# ============================================================
+# TestUtil —— 内部工具：_as_str、patch、_Array/.s/.df 访问器、pickle 序列化
+# ============================================================
 class TestUtil(TestCase):
     def test_as_str(self):
         def func():
@@ -1037,6 +1070,9 @@ class TestUtil(TestCase):
         bt.plot(results=stats, resample='2d', open_browser=False)
 
 
+# ============================================================
+# TestDocs —— 文档验证：docstring 和 README 中的统计字段完整性
+# ============================================================
 class TestDocs(TestCase):
     DOCS_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'doc')
 
@@ -1066,6 +1102,9 @@ class TestDocs(TestCase):
             self.assertIn(key, readme)
 
 
+# ============================================================
+# TestRegressions —— 回归测试：修复的 GitHub 问题（GH #521/#119 等）
+# ============================================================
 class TestRegressions(TestCase):
     def test_gh_521(self):
         class S(_S):
