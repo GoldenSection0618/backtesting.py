@@ -1,0 +1,9 @@
+# ============================================================
+# constraints.txt —— 课程复现环境版本约束
+# 上下文层：Backtesting.py 的部分测试在 pandas 3.x 下存在
+#           上游兼容性问题（如 FractionalBacktest 对只读数组
+#           的原地操作）。本文件锁定 pandas<3，用于课程复现。
+# 使用方式：
+#   python -m pip install -r requirements.txt -c constraints.txt
+# ============================================================
+pandas<3
