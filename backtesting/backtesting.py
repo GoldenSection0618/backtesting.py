@@ -1281,6 +1281,50 @@ class Backtest:
         Run the backtest. Returns `pd.Series` with results and statistics.
 
         Keyword arguments are interpreted as strategy parameters.
+
+            >>> Backtest(GOOG, SmaCross).run()
+            Start                     2004-08-19 00:00:00
+            End                       2013-03-01 00:00:00
+            Duration                   3116 days 00:00:00
+            Exposure Time [%]                    96.74115
+            Equity Final [$]                     51422.99
+            Equity Peak [$]                      75787.44
+            Return [%]                           414.2299
+            Buy & Hold Return [%]               703.45824
+            Return (Ann.) [%]                    21.18026
+            Volatility (Ann.) [%]                36.49391
+            CAGR [%]                             14.15984
+            Sharpe Ratio                          0.58038
+            Sortino Ratio                         1.08479
+            Calmar Ratio                          0.44144
+            Alpha [%]                           394.37391
+            Beta                                  0.03803
+            Max. Drawdown [%]                   -47.98013
+            Avg. Drawdown [%]                    -5.92585
+            Max. Drawdown Duration      584 days 00:00:00
+            Avg. Drawdown Duration       41 days 00:00:00
+            # Trades                                   66
+            Win Rate [%]                          46.9697
+            Best Trade [%]                       53.59595
+            Worst Trade [%]                     -18.39887
+            Avg. Trade [%]                        2.53172
+            Max. Trade Duration         183 days 00:00:00
+            Avg. Trade Duration          46 days 00:00:00
+            Profit Factor                         2.16795
+            Expectancy [%]                        3.27481
+            SQN                                   1.07662
+            Kelly Criterion                       0.15187
+            _strategy                            SmaCross
+            _equity_curve                           Eq...
+            _trades                       Size  EntryB...
+            dtype: object
+
+        .. warning::
+            You may obtain different results for different strategy parameters.
+            E.g. if you use 50- and 200-bar SMA, the trading simulation will
+            begin on bar 201. The actual length of delay is equal to the lookback
+            period of the `Strategy.I` indicator which lags the most.
+            Obviously, this can affect results.
         """
         data = _Data(self._data.copy(deep=False))     # 创建数据访问器
         broker: _Broker = self._broker(data=data)     # 创建 Broker（partial 展开）
