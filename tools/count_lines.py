@@ -20,6 +20,8 @@ FILES = [
     "pyproject.toml",
     "setup.cfg",
     "setup.py",
+    "constraints.txt",
+    "run_demo.py",
     "backtesting/__init__.py",
     "backtesting/backtesting.py",
     "backtesting/lib.py",
@@ -30,6 +32,7 @@ FILES = [
     "backtesting/test/__init__.py",
     "backtesting/test/__main__.py",
     "backtesting/test/_test.py",
+    "tools/count_lines.py",
 ]
 
 

@@ -6,6 +6,8 @@ requirements.txt | 12 | 12
 pyproject.toml | 59 | 53
 setup.cfg | 80 | 64
 setup.py | 238 | 217
+constraints.txt | 9 | 9
+run_demo.py | 76 | 67
 backtesting/__init__.py | 148 | 116
 backtesting/backtesting.py | 1752 | 1484
 backtesting/lib.py | 846 | 726
@@ -16,4 +18,5 @@ backtesting/autoscale_cb.js | 57 | 50
 backtesting/test/__init__.py | 61 | 49
 backtesting/test/__main__.py | 25 | 21
 backtesting/test/_test.py | 1218 | 1013
-TOTAL | 6153 | 5239
+tools/count_lines.py | 81 | 66
+TOTAL | 6319 | 5381
