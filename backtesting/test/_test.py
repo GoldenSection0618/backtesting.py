@@ -1,10 +1,10 @@
 # ============================================================
-# backtesting/test/_test.py — 完整测试套件
+# backtesting/test/_test.py -- 完整测试套件
 # ============================================================
-# 上下文层：运行方式 python -m backtesting.test。
-#           76 个测试用例覆盖回测执行、订单撮合、佣金、优化、
-#           绘图、统计、工具函数和回归防护。
-# 设计层：unittest 框架，8 个 TestCase 子类按功能分组。
+# 上下文层: 运行方式 python -m backtesting.test.
+#           76 个测试用例覆盖回测执行, 订单撮合, 佣金, 优化, 
+#           绘图, 统计, 工具函数和回归防护.
+# 设计层: unittest 框架, 8 个 TestCase 子类按功能分组.
 
 import inspect
 import multiprocessing as mp
@@ -41,7 +41,7 @@ from backtesting.lib import (
 )
 from backtesting.test import BTCUSD, EURUSD, GOOG, SMA
 
-# 功能层：截取前 20 行数据——避免指标预热期，实现快速测试
+# 功能层: 截取前 20 行数据----避免指标预热期, 实现快速测试
 SHORT_DATA = GOOG.iloc[:20]  # Short data for fast tests with no indicator lag
 
 
@@ -87,22 +87,22 @@ class _S(Strategy):
 
 
 # ============================================================
-# TestBacktest —— 回测引擎：基本运行、数据验证、佣金和订单
+# TestBacktest ---- 回测引擎: 基本运行, 数据验证, 佣金和订单
 # ============================================================
 class TestBacktest(TestCase):
-    # 验证回测引擎基本功能——运行、数据校验、佣金、订单执行
+    # 验证回测引擎基本功能----运行, 数据校验, 佣金, 订单执行
     def test_run(self):
-        """基本回测运行不报错。"""
+        """基本回测运行不报错."""
         bt = Backtest(EURUSD, SmaCross)
         bt.run()
 
     def test_run_invalid_param(self):
-        """传入策略没有的参数应抛 AttributeError。"""
+        """传入策略没有的参数应抛 AttributeError."""
         bt = Backtest(GOOG, SmaCross)
         self.assertRaises(AttributeError, bt.run, foo=3)
 
     def test_run_speed(self):
-        """20 行数据的回测应在 0.3 秒内完成（性能基准）。"""
+        """20 行数据的回测应在 0.3 秒内完成(性能基准)."""
         bt = Backtest(GOOG, SmaCross)
         start = time.process_time()
         bt.run()
@@ -110,21 +110,21 @@ class TestBacktest(TestCase):
         self.assertLess(end - start, .3)
 
     def test_data_missing_columns(self):
-        """缺少 OHLC 必须列应抛 ValueError。"""
+        """缺少 OHLC 必须列应抛 ValueError."""
         df = GOOG.copy(deep=False)
         del df['Open']
         with self.assertRaises(ValueError):
             Backtest(df, SmaCross).run()
 
     def test_data_nan_columns(self):
-        """OHLC 含 NaN 应抛 ValueError。"""
+        """OHLC 含 NaN 应抛 ValueError."""
         df = GOOG.copy()
         df['Open'] = np.nan
         with self.assertRaises(ValueError):
             Backtest(df, SmaCross).run()
 
     def test_data_extra_columns(self):
-        """DataFrame 允许额外列（如 P/E），策略可正常访问。"""
+        """DataFrame 允许额外列(如 P/E), 策略可正常访问."""
         df = GOOG.copy(deep=False)
         df['P/E'] = np.arange(len(df))
         df['MCap'] = np.arange(len(df))
@@ -141,14 +141,14 @@ class TestBacktest(TestCase):
         Backtest(df, S).run()
 
     def test_data_invalid(self):
-        """非 DataFrame（如纯 Index）或空数据应抛异常。"""
+        """非 DataFrame(如纯 Index)或空数据应抛异常."""
         with self.assertRaises(TypeError):
             Backtest(GOOG.index, SmaCross).run()
         with self.assertRaises(ValueError):
             Backtest(GOOG.iloc[:0], SmaCross).run()
 
     def test_assertions(self):
-        """综合断言——指标类型、数据访问、订单属性、交易平仓全覆盖。"""
+        """综合断言----指标类型, 数据访问, 订单属性, 交易平仓全覆盖."""
         class Assertive(Strategy):
             def init(self):
                 self.sma = self.I(SMA, self.data.Close, 10)
@@ -248,13 +248,13 @@ class TestBacktest(TestCase):
         self.assertEqual(stats['# Trades'], 131)
 
     def test_broker_params(self):
-        """自定义 cash/spread/margin/trade_on_close 参数正常运行。"""
+        """自定义 cash/spread/margin/trade_on_close 参数正常运行."""
         bt = Backtest(GOOG.iloc[:100], SmaCross,
                       cash=1000, spread=.01, margin=.1, trade_on_close=True)
         bt.run()
 
     def test_spread_commission(self):
-        """spread 和 commission（固定+比例 / 纯比例 / callable）对权益的影响精确验证。"""
+        """spread 和 commission(固定+比例 / 纯比例 / callable)对权益的影响精确验证."""
         class S(Strategy):
             def init(self):
                 self.done = False
@@ -286,7 +286,7 @@ class TestBacktest(TestCase):
                          [9781.28, 9846.04])
 
     def test_commissions(self):
-        """佣金精确计算——固定+比例佣金应在进出场各扣一次。"""
+        """佣金精确计算----固定+比例佣金应在进出场各扣一次."""
         class S(_S):
             def next(self):
                 if len(self.data) == 2:
@@ -308,7 +308,7 @@ class TestBacktest(TestCase):
             CASH + (PRICE_EXIT - PRICE_ENTRY) * SIZE - EXPECTED_PAID_COMMISSION)
 
     def test_dont_overwrite_data(self):
-        """回测/优化/绘图不应修改传入的原始 DataFrame。"""
+        """回测/优化/绘图不应修改传入的原始 DataFrame."""
         df = EURUSD.copy()
         bt = Backtest(df, SmaCross)
         bt.run()
@@ -317,27 +317,27 @@ class TestBacktest(TestCase):
         self.assertTrue(df.equals(EURUSD))
 
     def test_strategy_abstract(self):
-        """不能实例化未实现 init/next 的抽象 Strategy。"""
+        """不能实例化未实现 init/next 的抽象 Strategy."""
         class MyStrategy(Strategy):
             pass
 
         self.assertRaises(TypeError, MyStrategy, None, None)
 
     def test_strategy_str(self):
-        """策略字符串表示——含/不含参数的正确格式。"""
+        """策略字符串表示----含/不含参数的正确格式."""
         bt = Backtest(GOOG.iloc[:100], SmaCross)
         self.assertEqual(str(bt.run()._strategy), SmaCross.__name__)
         self.assertEqual(str(bt.run(fast=11)._strategy), SmaCross.__name__ + '(fast=11)')
 
     def test_compute_drawdown(self):
-        """回撤持续期和峰值计算——用人工构造序列验证。"""
+        """回撤持续期和峰值计算----用人工构造序列验证."""
         dd = pd.Series([0, 1, 7, 0, 4, 0, 0])
         durations, peaks = compute_drawdown_duration_peaks(dd)
         np.testing.assert_array_equal(durations, pd.Series([3, 2], index=[3, 5]).reindex(dd.index))
         np.testing.assert_array_equal(peaks, pd.Series([7, 4], index=[3, 5]).reindex(dd.index))
 
     def test_compute_stats(self):
-        """lib.compute_stats——部分交易统计重算。"""
+        """lib.compute_stats----部分交易统计重算."""
         stats = Backtest(GOOG, SmaCross, finalize_trades=True).run()
         expected = pd.Series({
                 # NOTE: These values are also used on the website!  # noqa: E126
@@ -403,7 +403,7 @@ class TestBacktest(TestCase):
                     *indicator_columns]))
 
     def test_compute_stats_bordercase(self):
-        """边界情况——单交易/单持仓/无交易时统计不报错。"""
+        """边界情况----单交易/单持仓/无交易时统计不报错."""
         class SingleTrade(Strategy):
             def init(self):
                 self._done = False
@@ -436,7 +436,7 @@ class TestBacktest(TestCase):
                 self.assertEqual(stats['_strategy'].__class__, strategy)
 
     def test_trade_enter_hit_sl_on_same_day(self):
-        """进场日同时触发止损——SL 应在同 K 线执行。"""
+        """进场日同时触发止损----SL 应在同 K 线执行."""
         the_day = pd.Timestamp("2012-10-17 00:00:00")
 
         class S(_S):
@@ -455,7 +455,7 @@ class TestBacktest(TestCase):
             self.assertEqual(Backtest(GOOG, S).run()._trades.iloc[0].ExitPrice, 705.58)
 
     def test_stop_price_between_sl_tp(self):
-        """stop 价格在 SL/TP 之间——正常执行但有歧义警告。"""
+        """stop 价格在 SL/TP 之间----正常执行但有歧义警告."""
         class S(_S):
             def next(self):
                 if self.data.index[-1] == pd.Timestamp("2004-09-09 00:00:00"):
@@ -465,7 +465,7 @@ class TestBacktest(TestCase):
             self.assertEqual(Backtest(GOOG, S).run()._trades.iloc[0].EntryPrice, 104)
 
     def test_position_close_portion(self):
-        """Position.close(portion=.5) 多次部分平仓。"""
+        """Position.close(portion=.5) 多次部分平仓."""
         class SmaCross(Strategy):
             def init(self):
                 self.sma1 = self.I(SMA, self.data.Close, 10)
@@ -481,7 +481,7 @@ class TestBacktest(TestCase):
         bt.run()
 
     def test_close_orders_from_last_strategy_iteration(self):
-        """末次迭代中的平仓订单是否被正确处理。"""
+        """末次迭代中的平仓订单是否被正确处理."""
         class S(_S):
             def next(self):
                 if not self.position:
@@ -494,7 +494,7 @@ class TestBacktest(TestCase):
         self.assertFalse(Backtest(SHORT_DATA, S, finalize_trades=True).run()._trades.empty)
 
     def test_check_adjusted_price_when_placing_order(self):
-        """含价差时 TP 可能低于调整价，应抛 ValueError。"""
+        """含价差时 TP 可能低于调整价, 应抛 ValueError."""
         class S(_S):
             def next(self):
                 self.buy(tp=self.data.Close * 1.01)
@@ -503,10 +503,10 @@ class TestBacktest(TestCase):
 
 
 # ============================================================
-# TestStrategy —— 策略机制：仓位、对冲、exclusive_orders、tag
+# TestStrategy ---- 策略机制: 仓位, 对冲, exclusive_orders, tag
 # ============================================================
 class TestStrategy(TestCase):
-    # 辅助方法：使用 Python 生成器协程模拟策略的逐步执行
+    # 辅助方法: 使用 Python 生成器协程模拟策略的逐步执行
     @staticmethod
     def _Backtest(strategy_coroutine, data=SHORT_DATA, **kwargs):
         class S(Strategy):
@@ -519,7 +519,7 @@ class TestStrategy(TestCase):
         return Backtest(data, S, **kwargs)
 
     def test_position(self):
-        """Position 属性——is_long/is_short/size/pl 正确性。"""
+        """Position 属性----is_long/is_short/size/pl 正确性."""
         def coroutine(self):
             yield self.buy()
 
@@ -542,7 +542,7 @@ class TestStrategy(TestCase):
         self._Backtest(coroutine).run()
 
     def test_broker_hedging(self):
-        """hedging=True 时允许同时持有多头和空头。"""
+        """hedging=True 时允许同时持有多头和空头."""
         def coroutine(self):
             yield self.buy(size=2)
 
@@ -554,7 +554,7 @@ class TestStrategy(TestCase):
         self._Backtest(coroutine, hedging=True).run()
 
     def test_broker_exclusive_orders(self):
-        """exclusive_orders=True 时新订单自动平旧仓。"""
+        """exclusive_orders=True 时新订单自动平旧仓."""
         def coroutine(self):
             yield self.buy(size=2)
 
@@ -567,7 +567,7 @@ class TestStrategy(TestCase):
         self._Backtest(coroutine, exclusive_orders=True).run()
 
     def test_trade_multiple_close(self):
-        """多次调用 Trade.close() 不应出错。"""
+        """多次调用 Trade.close() 不应出错."""
         def coroutine(self):
             yield self.buy()
 
@@ -579,7 +579,7 @@ class TestStrategy(TestCase):
         self._Backtest(coroutine).run()
 
     def test_close_trade_leaves_needsize_0(self):
-        """平仓后 need_size 归零，不应产生额外订单。"""
+        """平仓后 need_size 归零, 不应产生额外订单."""
         def coroutine(self):
             self.buy(size=1)
             self.buy(size=1)
@@ -590,7 +590,7 @@ class TestStrategy(TestCase):
         self._Backtest(coroutine).run()
 
     def test_stop_limit_order_price_is_stop_price(self):
-        """止损限价单成交价应是 stop 价。"""
+        """止损限价单成交价应是 stop 价."""
         def coroutine(self):
             self.buy(stop=112, limit=113, size=1)
             self.sell(stop=107, limit=105, size=1)
@@ -600,7 +600,7 @@ class TestStrategy(TestCase):
         self.assertListEqual(stats._trades.filter(like='Price').stack().tolist(), [112, 107])
 
     def test_autoclose_trades_on_finish(self):
-        """finalize_trades=True 时回测结束自动平仓。"""
+        """finalize_trades=True 时回测结束自动平仓."""
         def coroutine(self):
             yield self.buy()
 
@@ -608,7 +608,7 @@ class TestStrategy(TestCase):
         self.assertEqual(len(stats._trades), 1)
 
     def test_order_tag(self):
-        """Order.tag 可正确传递到 Trade。"""
+        """Order.tag 可正确传递到 Trade."""
         def coroutine(self):
             yield self.buy(size=2, tag=1)
             yield self.sell(size=1, tag='s')
@@ -622,11 +622,11 @@ class TestStrategy(TestCase):
 
 
 # ============================================================
-# TestOptimize —— 参数优化：网格搜索、SAMBO、约束、热力图
+# TestOptimize ---- 参数优化: 网格搜索, SAMBO, 约束, 热力图
 # ============================================================
 class TestOptimize(TestCase):
     def test_optimize(self):
-        """网格搜索优化——参数验证、约束、热力图返回。"""
+        """网格搜索优化----参数验证, 约束, 热力图返回."""
         bt = Backtest(GOOG.iloc[:100], SmaCross)
         OPT_PARAMS = {'fast': range(2, 5, 2), 'slow': [2, 5, 7, 9]}
 
@@ -656,7 +656,7 @@ class TestOptimize(TestCase):
             bt.plot(filename=f, open_browser=False)
 
     def test_method_sambo(self):
-        """SAMBO 贝叶斯优化——结果结构验证。"""
+        """SAMBO 贝叶斯优化----结果结构验证."""
         bt = Backtest(GOOG.iloc[:100], SmaCross, finalize_trades=True)
         res, heatmap, sambo_results = bt.optimize(
             fast=range(2, 20), slow=np.arange(2, 20, dtype=object),
@@ -674,7 +674,7 @@ class TestOptimize(TestCase):
         self.assertEqual(heatmap.index.tolist(), heatmap.dropna().index.unique().tolist())
 
     def test_max_tries(self):
-        """max_tries 限制评估次数（grid 和 sambo）。"""
+        """max_tries 限制评估次数(grid 和 sambo)."""
         bt = Backtest(GOOG.iloc[:100], SmaCross)
         OPT_PARAMS = {'fast': range(2, 10, 2), 'slow': [2, 5, 7, 9]}
         for method, max_tries, random_state in (('grid', 5, 0),
@@ -692,19 +692,19 @@ class TestOptimize(TestCase):
                 self.assertEqual(len(heatmap), 6)
 
     def test_optimize_invalid_param(self):
-        """不存在的参数应抛异常。"""
+        """不存在的参数应抛异常."""
         bt = Backtest(GOOG.iloc[:100], SmaCross)
         self.assertRaises(AttributeError, bt.optimize, foo=range(3))
         self.assertRaises(ValueError, bt.optimize, fast=[])
 
     def test_optimize_no_trades(self):
-        """零交易参数组合的处理。"""
+        """零交易参数组合的处理."""
         bt = Backtest(GOOG, SmaCross)
         stats = bt.optimize(fast=[3], slow=[3])
         self.assertTrue(stats.isnull().any())
 
     def test_optimize_speed(self):
-        """优化性能基准。"""
+        """优化性能基准."""
         bt = Backtest(GOOG.iloc[:100], SmaCross)
         start = time.process_time()
         bt.optimize(fast=range(2, 20, 2), slow=range(10, 40, 2))
@@ -715,16 +715,16 @@ class TestOptimize(TestCase):
 
 
 # ============================================================
-# TestPlot —— 图表绘制：HTML 输出、参数组合、时间分辨率、指标显示
+# TestPlot ---- 图表绘制: HTML 输出, 参数组合, 时间分辨率, 指标显示
 # ============================================================
 class TestPlot(TestCase):
     def test_plot_before_run(self):
-        """未运行就调 plot() 应抛 RuntimeError。"""
+        """未运行就调 plot() 应抛 RuntimeError."""
         bt = Backtest(GOOG, SmaCross)
         self.assertRaises(RuntimeError, bt.plot)
 
     def test_file_size(self):
-        """生成 HTML 文件在 500KB 以内。"""
+        """生成 HTML 文件在 500KB 以内."""
         bt = Backtest(GOOG, SmaCross)
         bt.run()
         with _tempfile() as f:
@@ -732,7 +732,7 @@ class TestPlot(TestCase):
             self.assertLess(os.path.getsize(f), 500000)
 
     def test_params(self):
-        """各种 plot() 参数组合不崩溃。"""
+        """各种 plot() 参数组合不崩溃."""
         bt = Backtest(GOOG.iloc[:100], SmaCross)
         bt.run()
         with _tempfile() as f:
@@ -752,7 +752,7 @@ class TestPlot(TestCase):
                     bt.plot(**dict([p]), filename=f, open_browser=False)
 
     def test_hide_legend(self):
-        """show_legend=False 可隐藏图例。"""
+        """show_legend=False 可隐藏图例."""
         bt = Backtest(GOOG.iloc[:100], SmaCross)
         bt.run()
         with _tempfile() as f:
@@ -761,7 +761,7 @@ class TestPlot(TestCase):
             time.sleep(5)
 
     def test_resolutions(self):
-        """各种时间分辨率（ms-W）图表正常生成。"""
+        """各种时间分辨率(ms-W)图表正常生成."""
         with _tempfile() as f:
             for rule in 'ms s min h D W ME'.split():
                 with self.subTest(rule=rule):
@@ -771,7 +771,7 @@ class TestPlot(TestCase):
                     bt.plot(filename=f, open_browser=False)
 
     def test_range_axis(self):
-        """非 DatetimeIndex（RangeIndex）也能绘图。"""
+        """非 DatetimeIndex(RangeIndex)也能绘图."""
         df = GOOG.iloc[:100].reset_index(drop=True)
 
         # Warm-up. CPython bug bpo-29620.
@@ -788,7 +788,7 @@ class TestPlot(TestCase):
             bt.plot(filename=f, open_browser=False)
 
     def test_preview(self):
-        """overlay=False 指标 + 随机数组图表预览。"""
+        """overlay=False 指标 + 随机数组图表预览."""
         class Strategy(SmaCross):
             def init(self):
                 super().init()
@@ -807,7 +807,7 @@ class TestPlot(TestCase):
             time.sleep(5)
 
     def test_wellknown(self):
-        """已知场景——stop/limit 订单交互和爆仓。"""
+        """已知场景----stop/limit 订单交互和爆仓."""
         class S(_S):
             def next(self):
                 date = self.data.index[-1]
@@ -838,7 +838,7 @@ class TestPlot(TestCase):
             time.sleep(1)
 
     def test_resample(self):
-        """大数据量自动降采样触发和警告。"""
+        """大数据量自动降采样触发和警告."""
         class S(SmaCross):
             def init(self):
                 self.I(lambda: ['x'] * len(self.data))  # categorical indicator, GH-309
@@ -855,7 +855,7 @@ class TestPlot(TestCase):
             time.sleep(1)
 
     def test_indicator_name(self):
-        """各类指标命名（单值/元组/format/自定义）。"""
+        """各类指标命名(单值/元组/format/自定义)."""
         test_self = self
 
         class S(Strategy):
@@ -887,7 +887,7 @@ class TestPlot(TestCase):
                     open_browser=False)
 
     def test_indicator_color(self):
-        """自定义指标颜色。"""
+        """自定义指标颜色."""
         class S(Strategy):
             def init(self):
                 a = self.I(SMA, self.data.Close, 5, overlay=True, color='red')
@@ -905,7 +905,7 @@ class TestPlot(TestCase):
                     open_browser=False)
 
     def test_indicator_scatter(self):
-        """scatter=True 散点图模式。"""
+        """scatter=True 散点图模式."""
         class S(Strategy):
             def init(self):
                 self.I(SMA, self.data.Close, 5, overlay=True, scatter=True)
@@ -923,23 +923,23 @@ class TestPlot(TestCase):
 
 
 # ============================================================
-# TestLib —— lib.py 工具库：信号函数、重采样、SignalStrategy、TrailingStrategy
+# TestLib ---- lib.py 工具库: 信号函数, 重采样, SignalStrategy, TrailingStrategy
 # ============================================================
 class TestLib(TestCase):
     def test_barssince(self):
-        """距条件最近一次为真的 K 线数。"""
+        """距条件最近一次为真的 K 线数."""
         self.assertEqual(barssince(np.r_[1, 0, 0]), 2)
         self.assertEqual(barssince(np.r_[0, 0, 0]), np.inf)
         self.assertEqual(barssince(np.r_[0, 0, 0], 0), 0)
 
     def test_cross(self):
-        """双向交叉判断。"""
+        """双向交叉判断."""
         self.assertTrue(cross([0, 1], [1, 0]))
         self.assertTrue(cross([1, 0], [0, 1]))
         self.assertFalse(cross([1, 0], [1, 0]))
 
     def test_crossover(self):
-        """上穿判断（含 pd.Series 和数字）。"""
+        """上穿判断(含 pd.Series 和数字)."""
         self.assertTrue(crossover([0, 1], [1, 0]))
         self.assertTrue(crossover([0, 1], .5))
         self.assertTrue(crossover([0, 1], pd.Series([.5, .5], index=[5, 6])))
@@ -947,12 +947,12 @@ class TestLib(TestCase):
         self.assertFalse(crossover([0], [1]))
 
     def test_quantile(self):
-        """分位值和排名计算。"""
+        """分位值和排名计算."""
         self.assertEqual(quantile(np.r_[1, 3, 2], .5), 2)
         self.assertEqual(quantile(np.r_[1, 3, 2]), .5)
 
     def test_resample_apply(self):
-        """多时间框架指标——resample_apply 重采样后应用指标。"""
+        """多时间框架指标----resample_apply 重采样后应用指标."""
         res = resample_apply('D', SMA, EURUSD.Close, 10)
         self.assertEqual(res.name, 'C[D]')
         self.assertEqual(res.count() / res.size, .9634)
@@ -974,7 +974,7 @@ class TestLib(TestCase):
         self.assertIsInstance(res3, pd.DataFrame)
 
     def test_plot_heatmaps(self):
-        """参数热力图生成。"""
+        """参数热力图生成."""
         bt = Backtest(GOOG, SmaCross)
         stats, heatmap = bt.optimize(fast=range(2, 7, 2),
                                      slow=range(7, 15, 2),
@@ -989,7 +989,7 @@ class TestLib(TestCase):
             time.sleep(5)
 
     def test_random_ohlc_data(self):
-        """随机 OHLC 生成器——结构应与原始一致。"""
+        """随机 OHLC 生成器----结构应与原始一致."""
         generator = random_ohlc_data(GOOG, frac=1)
         new_data = next(generator)
         self.assertEqual(list(new_data.index), list(GOOG.index))
@@ -997,7 +997,7 @@ class TestLib(TestCase):
         self.assertEqual(list(new_data.columns), list(GOOG.columns))
 
     def test_compute_stats(self):
-        """lib.compute_stats——部分交易统计重算。"""
+        """lib.compute_stats----部分交易统计重算."""
         stats = Backtest(GOOG, SmaCross).run()
         only_long_trades = stats._trades[stats._trades.Size > 0]
         long_stats = compute_stats(stats=stats, trades=only_long_trades,
@@ -1010,7 +1010,7 @@ class TestLib(TestCase):
         assert_frame_equal(long_stats._trades, only_long_trades)
 
     def test_SignalStrategy(self):
-        """SignalStrategy——基于信号向量的自动交易。"""
+        """SignalStrategy----基于信号向量的自动交易."""
         class S(SignalStrategy):
             def init(self):
                 sma = self.data.Close.s.rolling(10).mean()
@@ -1021,7 +1021,7 @@ class TestLib(TestCase):
         self.assertIn(stats['# Trades'], (1179, 1180))  # varies on different archs?
 
     def test_TrailingStrategy(self):
-        """TrailingStrategy——ATR 跟踪止损。"""
+        """TrailingStrategy----ATR 跟踪止损."""
         class S(TrailingStrategy):
             def init(self):
                 super().init()
@@ -1039,7 +1039,7 @@ class TestLib(TestCase):
         self.assertEqual(stats['# Trades'], 56)
 
     def test_FractionalBacktest(self):
-        """分数股/μBTC 交易（pandas 3.x 已知兼容性问题）。"""
+        """分数股/μBTC 交易(pandas 3.x 已知兼容性问题)."""
         ubtc_bt = FractionalBacktest(BTCUSD['2015':], SmaCross, fractional_unit=1 / 1e6, cash=100)
         stats = ubtc_bt.run(fast=2, slow=3)
         self.assertEqual(stats['# Trades'], 41)
@@ -1050,7 +1050,7 @@ class TestLib(TestCase):
         self.assertAlmostEqual(stats['_strategy']._indicators[0][trade['EntryBar']], 234.14)
 
     def test_MultiBacktest(self):
-        """多品种并行回测——fork/spawn/forkserver。"""
+        """多品种并行回测----fork/spawn/forkserver."""
         import backtesting
         assert callable(getattr(backtesting, 'Pool', None)), backtesting.__dict__
         for start_method in mp.get_all_start_methods():
@@ -1069,11 +1069,11 @@ class TestLib(TestCase):
 
 
 # ============================================================
-# TestUtil —— 内部工具：_as_str、patch、_Array/.s/.df 访问器、pickle 序列化
+# TestUtil ---- 内部工具: _as_str, patch, _Array/.s/.df 访问器, pickle 序列化
 # ============================================================
 class TestUtil(TestCase):
     def test_as_str(self):
-        """_as_str 各种类型→字符串。"""
+        """_as_str 各种类型→字符串."""
         def func():
             pass
 
@@ -1094,7 +1094,7 @@ class TestUtil(TestCase):
             self.assertEqual(_as_str(_Array([1], name=s)), s[0])
 
     def test_patch(self):
-        """patch 上下文管理器——临时修改和恢复属性。"""
+        """patch 上下文管理器----临时修改和恢复属性."""
         class Object:
             pass
         o = Object()
@@ -1104,7 +1104,7 @@ class TestUtil(TestCase):
         self.assertFalse(o.attr)
 
     def test_pandas_accessors(self):
-        """_Array.s (Series) 和 _Data.df (DataFrame) 访问器。"""
+        """_Array.s (Series) 和 _Data.df (DataFrame) 访问器."""
         class S(Strategy):
             def init(self):
                 close, index = self.data.Close, self.data.index
@@ -1121,7 +1121,7 @@ class TestUtil(TestCase):
         Backtest(GOOG.iloc[:20], S).run()
 
     def test_indicators_picklable(self):
-        """_Indicator 可被 pickle 序列化（多进程依赖）。"""
+        """_Indicator 可被 pickle 序列化(多进程依赖)."""
         bt = Backtest(SHORT_DATA, SmaCross)
         with ProcessPoolExecutor() as executor:
             stats = executor.submit(Backtest.run, bt).result()
@@ -1130,7 +1130,7 @@ class TestUtil(TestCase):
 
 
 # ============================================================
-# TestDocs —— 文档验证：docstring 和 README 中的统计字段完整性
+# TestDocs ---- 文档验证: docstring 和 README 中的统计字段完整性
 # ============================================================
 class TestDocs(TestCase):
     DOCS_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'doc')
@@ -1138,7 +1138,7 @@ class TestDocs(TestCase):
     @unittest.skipUnless(os.path.isdir(DOCS_DIR), "docs dir doesn't exist")
     @unittest.skipUnless(sys.platform.startswith('linux'), "test_examples requires mp.start_method=fork")
     def test_examples(self):
-        """doc/examples/ 示例脚本可运行（需 doc 目录，课程分支 skip）。"""
+        """doc/examples/ 示例脚本可运行(需 doc 目录, 课程分支 skip)."""
         import backtesting
         examples = glob(os.path.join(self.DOCS_DIR, 'examples', '*.py'))
         self.assertGreaterEqual(len(examples), 4)
@@ -1149,13 +1149,13 @@ class TestDocs(TestCase):
                     run_path(file)
 
     def test_backtest_run_docstring_contains_stats_keys(self):
-        """Backtest.run docstring 含所有统计字段。"""
+        """Backtest.run docstring 含所有统计字段."""
         stats = Backtest(SHORT_DATA, SmaCross).run()
         for key in stats.index:
             self.assertIn(key, Backtest.run.__doc__)
 
     def test_readme_contains_stats_keys(self):
-        """README.md 含所有统计字段。"""
+        """README.md 含所有统计字段."""
         with open(os.path.join(os.path.dirname(__file__),
                                '..', '..', 'README.md')) as f:
             readme = f.read()
@@ -1165,11 +1165,11 @@ class TestDocs(TestCase):
 
 
 # ============================================================
-# TestRegressions —— 回归测试：修复的 GitHub 问题（GH #521/#119 等）
+# TestRegressions ---- 回归测试: 修复的 GitHub 问题(GH #521/#119 等)
 # ============================================================
 class TestRegressions(TestCase):
     def test_gh_521(self):
-        """SL 在 trade_on_close 下正确触发。"""
+        """SL 在 trade_on_close 下正确触发."""
         class S(_S):
             def next(self):
                 if self.data.Close[-1] == 100:
@@ -1182,13 +1182,13 @@ class TestRegressions(TestCase):
         self.assertEqual(bt.run()._trades['ExitPrice'][0], 50)
 
     def test_stats_annualized(self):
-        """周线年化收益率不为 NaN。"""
+        """周线年化收益率不为 NaN."""
         stats = Backtest(GOOG.resample('W').agg(OHLCV_AGG), SmaCross).run()
         self.assertFalse(np.isnan(stats['Return (Ann.) [%]']))
         self.assertEqual(round(stats['Return (Ann.) [%]']), -3)
 
     def test_cancel_orders(self):
-        """平仓+取消所有订单不报错。"""
+        """平仓+取消所有订单不报错."""
         class S(_S):
             def next(self):
                 self.buy(sl=1, tp=1e3)
@@ -1200,7 +1200,7 @@ class TestRegressions(TestCase):
         Backtest(SHORT_DATA, S).run()
 
     def test_trade_on_close_closes_trades_on_close(self):
-        """trade_on_close=True 时交易按收盘价成交。"""
+        """trade_on_close=True 时交易按收盘价成交."""
         def coro(strat):
             yield strat.buy(size=1, sl=90) and strat.buy(size=1, sl=80)
             assert len(strat.trades) == 2
@@ -1236,14 +1236,14 @@ class TestRegressions(TestCase):
             self.assertEqual(trades['ExitPrice'][1], 40)
 
     def test_trades_dates_match_prices(self):
-        """交易进出场价格与行情数据对齐。"""
+        """交易进出场价格与行情数据对齐."""
         bt = Backtest(EURUSD, SmaCross, trade_on_close=True)
         trades = bt.run()._trades
         self.assertEqual(EURUSD.Close[trades['ExitTime']].tolist(),
                          trades['ExitPrice'].tolist())
 
     def test_sl_always_before_tp(self):
-        """SL/TP 价格方向关系验证。"""
+        """SL/TP 价格方向关系验证."""
         class S(_S):
             def next(self):
                 i = len(self.data.index)
@@ -1258,7 +1258,7 @@ class TestRegressions(TestCase):
         self.assertEqual(trades['ExitPrice'].iloc[0], 104.95)
 
     def test_stop_entry_and_tp_in_same_bar(self):
-        """stop entry 和 TP 同 K 线触发——TP 优先。"""
+        """stop entry 和 TP 同 K 线触发----TP 优先."""
         class S(_S):
             def next(self):
                 i = len(self.data.index)
@@ -1270,14 +1270,14 @@ class TestRegressions(TestCase):
         self.assertEqual(trades['ExitPrice'].iloc[0], 105)
 
     def test_optimize_datetime_index_with_timezone(self):
-        """带时区的 datetime 索引在优化中正常。"""
+        """带时区的 datetime 索引在优化中正常."""
         data: pd.DataFrame = GOOG.iloc[:100]
         data.index = data.index.tz_localize('Asia/Kolkata')
         res = Backtest(data, SmaCross).optimize(fast=range(2, 3), slow=range(4, 5))
         self.assertGreater(res['# Trades'], 0)
 
     def test_sl_tp_values_in_trades_df(self):
-        """SL/TP 价格被正确记录在 trades 表中。"""
+        """SL/TP 价格被正确记录在 trades 表中."""
         class S(_S):
             def next(self):
                 self.next = lambda: None

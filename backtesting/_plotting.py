@@ -322,7 +322,7 @@ def plot(*, results: pd.Series,
             tooltips=tooltips, mode='vline' if vline else 'mouse'))
 
     def _plot_equity_section(is_return=False):
-        """权益曲线 + 峰值 + 最大回撤标记。"""
+        """Equity curve -- account value over time, with peak/final/drawdown annotations."""
         equity = equity_data['Equity'].copy()
         dd_end = equity_data['DrawdownDuration'].idxmax()
         if np.isnan(dd_end):
@@ -407,7 +407,7 @@ def plot(*, results: pd.Series,
         figs_above_ohlc.append(fig)
 
     def _plot_drawdown_section():
-        """回撤子图。"""
+        """Separate drawdown % curve below the equity chart."""
         fig = new_indicator_figure(
             y_axis_label="Drawdown", height=80)
         drawdown = equity_data['DrawdownPct']
@@ -424,7 +424,7 @@ def plot(*, results: pd.Series,
         return fig
 
     def _plot_pl_section():
-        """P/L 标记子图。"""
+        """Trade P/L markers -- triangles for each trade, green=win, red=loss."""
         fig = new_indicator_figure(
             y_axis_label="Profit / Loss", height=80)
         fig.add_layout(Span(
@@ -459,7 +459,7 @@ def plot(*, results: pd.Series,
         return fig
 
     def _plot_volume_section():
-        """成交量子图。"""
+        """Volume bar chart at the bottom, shows X-axis labels."""
         fig = new_indicator_figure(height=70, y_axis_label="Volume")
         fig.yaxis.ticker.desired_num_ticks = 3
         fig.xaxis.formatter = fig_ohlc.xaxis[0].formatter
@@ -472,7 +472,7 @@ def plot(*, results: pd.Series,
         return fig
 
     def _plot_superimposed_ohlc():
-        """大周期 K 线叠加在小周期上。"""
+        """Overlay larger-timeframe candlesticks (e.g. monthly on daily) for trend context."""
         time_resolution = pd.DatetimeIndex(df['datetime']).resolution
         resample_rule = (superimpose if isinstance(superimpose, str) else
                          dict(day='ME', hour='D', minute='h',
@@ -510,7 +510,7 @@ def plot(*, results: pd.Series,
             fill_color=factor_cmap('inc', colors_lighter, ['0', '1']))
 
     def _plot_ohlc():
-        """主 OHLC K 线。"""
+        """Main OHLC candlestick chart -- the core of the visualization."""
         fig_ohlc.segment('index', 'High', 'index', 'Low',
                          source=source, color="black",
                          legend_label='OHLC')
@@ -521,7 +521,7 @@ def plot(*, results: pd.Series,
         return r
 
     def _plot_ohlc_trades():
-        """交易进出场标记。"""
+        """Dotted lines connecting entry-to-exit for each trade on the OHLC chart."""
         trade_source.add(
             trades[['EntryBar', 'ExitBar']].values.tolist(),
             'position_lines_xs')
@@ -535,7 +535,7 @@ def plot(*, results: pd.Series,
             line_width=8, line_alpha=1, line_dash='dotted')
 
     def _plot_indicators():
-        """策略指标——区分 overlay（画在 K 线图上）和独立子图。"""
+        """Strategy indicators -- overlay type on price chart, standalone in separate panels."""
 
         # Bokeh 默认合并同名字符串的图例项。这里让 __eq__ 按对象标识比较，
         # 确保同名的不同指标线在图例中分开显示。

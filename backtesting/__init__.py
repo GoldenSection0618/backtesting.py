@@ -1,16 +1,16 @@
 # ============================================================
-# backtesting/__init__.py — 包入口
+# backtesting/__init__.py -- 包入口
 # ============================================================
-# 上下文层：`import backtesting` 时最先执行。负责暴露公开 API、
-#           读取版本号、提供跨平台进程池。
-# 功能层：从子模块导入 Backtest/Strategy 等核心类并重新导出，
-#          用户只需 `from backtesting import Backtest`。
-# 设计层：noqa: F401 告诉 lint 这些导入是为了重新导出而非本文件使用。
+# 上下文层: `import backtesting` 时最先执行.负责暴露公开 API, 
+#           读取版本号, 提供跨平台进程池.
+# 功能层: 从子模块导入 Backtest/Strategy 等核心类并重新导出, 
+#          用户只需 `from backtesting import Backtest`.
+# 设计层: noqa: F401 告诉 lint 这些导入是为了重新导出而非本文件使用.
 
 """
-包入口 — 当用户 `import backtesting` 时这里首先执行。
-职责：暴露公开 API、获取版本号、提供跨平台的进程池。
-下面的内容同时也是 pdoc3 生成文档的原材料。
+包入口 -- 当用户 `import backtesting` 时这里首先执行.
+职责: 暴露公开 API, 获取版本号, 提供跨平台的进程池.
+下面的内容同时也是 pdoc3 生成文档的原材料.
 
 ![xkcd.com/1570](https://imgs.xkcd.com/comics/engineer_syllogism.png){: height=263}
 
@@ -79,25 +79,25 @@ try:
 except ImportError:
     __version__ = '?.?.?'  # Package not installed
 
-# 重新导出——用户只需 from backtesting import Backtest
+# 重新导出----用户只需 from backtesting import Backtest
 from . import lib  # noqa: F401
 from ._plotting import set_bokeh_output  # noqa: F401
 from ._util import try_
 from .backtesting import Backtest, Strategy  # noqa: F401
 
 
-# 可替换的进程池，用于 Backtest.optimize() 并行执行
+# 可替换的进程池, 用于 Backtest.optimize() 并行执行
 # 用户可以 backtesting.Pool = multiprocessing.Pool 来自定义
 def Pool(processes=None, initializer=None, initargs=()):
     import multiprocessing as mp
     import sys
 
-    # Linux 上 fork 比 spawn 快（子进程继承父进程内存），
-    # Python 3.14 改了默认值，这里主动切回 fork
+    # Linux 上 fork 比 spawn 快(子进程继承父进程内存), 
+    # Python 3.14 改了默认值, 这里主动切回 fork
     if sys.platform.startswith('linux') and mp.get_start_method(allow_none=True) != 'fork':
         try_(lambda: mp.set_start_method('fork'))
 
-    # Windows/macOS 默认 spawn，降级为线程池
+    # Windows/macOS 默认 spawn, 降级为线程池
     if mp.get_start_method() == 'spawn':
         import warnings
         warnings.warn(

@@ -1,15 +1,15 @@
 # ============================================================
-# setup.py — 安装和打包配置
+# setup.py -- 安装和打包配置
 # ============================================================
-# 上下文层：pip install 会读取此文件，从中获取包名、依赖、版本号等元数据。
-# 功能层：声明 backtesting 包的 install_requires（numpy/pandas/bokeh）、
-#          可选依赖组（test/dev/doc）、PyPI 分类和搜索关键词。
-# 设计层：版本号由 setuptools_scm 从 git tag 自动生成，无需手动维护。
+# 上下文层: pip install 会读取此文件, 从中获取包名, 依赖, 版本号等元数据.
+# 功能层: 声明 backtesting 包的 install_requires(numpy/pandas/bokeh), 
+#          可选依赖组(test/dev/doc), PyPI 分类和搜索关键词.
+# 设计层: 版本号由 setuptools_scm 从 git tag 自动生成, 无需手动维护.
 
 import os
 import sys
 
-# 要求 Python 3.9+（PEP 585 内置泛型的最低版本）
+# 要求 Python 3.9+(PEP 585 内置泛型的最低版本)
 if sys.version_info < (3, 9):
     sys.exit('ERROR: Backtesting.py requires Python 3.9+')
 
@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
         # find_packages() 自动扫描含 __init__.py 的子目录
         packages=find_packages(),
-        # 打包时也带上 CSV、JS 等非 .py 文件
+        # 打包时也带上 CSV, JS 等非 .py 文件
         include_package_data=True,
 
         setup_requires=[
@@ -43,7 +43,7 @@ if __name__ == '__main__':
             'setuptools_scm',
         ],
 
-        # 从 git tag 自动生成版本号，写入 backtesting/_version.py
+        # 从 git tag 自动生成版本号, 写入 backtesting/_version.py
         use_scm_version={
             'write_to': os.path.join('backtesting', '_version.py'),
         },
@@ -55,7 +55,7 @@ if __name__ == '__main__':
             'bokeh >= 3.0.0, != 3.0.*, != 3.2.*',     # 排除不兼容版本
         ],
 
-        # 可选依赖组（pip install backtesting[test] 安装）
+        # 可选依赖组(pip install backtesting[test] 安装)
         extras_require={
             'doc': [
                 'pdoc3',

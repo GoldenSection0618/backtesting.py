@@ -1,13 +1,13 @@
 # ============================================================
-# backtesting/_util.py — 内部工具函数和数据结构
+# backtesting/_util.py -- 内部工具函数和数据结构
 # ============================================================
-# 上下文层：基础设施模块，被 backtesting.py、lib.py、_stats.py、
-#           _plotting.py 等几乎所有模块依赖。用户一般不直接碰。
-# 功能层：提供 try_、patch 上下文管理器、_as_str 格式化、_batch 分批、
-#          核心数据结构 _Array（ndarray 子类）、_Data（OHLCV 访问器）、
-#          SharedMemoryManager（多进程共享内存）。
-# 设计层：_Array 继承 np.ndarray 并重写 __new__/__array_finalize__——
-#          Python 高级特性：NumPy 子类化。_Data 用 __getattr__ 做属性代理。
+# 上下文层: 基础设施模块, 被 backtesting.py, lib.py, _stats.py, 
+#           _plotting.py 等几乎所有模块依赖.用户一般不直接碰.
+# 功能层: 提供 try_, patch 上下文管理器, _as_str 格式化, _batch 分批, 
+#          核心数据结构 _Array(ndarray 子类), _Data(OHLCV 访问器), 
+#          SharedMemoryManager(多进程共享内存).
+# 设计层: _Array 继承 np.ndarray 并重写 __new__/__array_finalize__----
+#          Python 高级特性: NumPy 子类化._Data 用 __getattr__ 做属性代理.
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ from typing import Dict, List, Optional, Sequence, Union, cast
 import numpy as np
 import pandas as pd
 
-# tqdm 是可选依赖：装了就走进度条，没装就原样透传
+# tqdm 是可选依赖: 装了就走进度条, 没装就原样透传
 try:
     from tqdm.auto import tqdm as _tqdm
     _tqdm = partial(_tqdm, leave=False)   # 进度条完成后自动消失
@@ -36,7 +36,7 @@ except ImportError:
 
 
 def try_(lazy_func, default=None, exception=Exception):
-    """执行 lazy 函数，抛指定异常时返回 default。lambda 是为了延迟求值。"""
+    """执行 lazy 函数, 抛指定异常时返回 default.lambda 是为了延迟求值."""
     try:
         return lazy_func()
     except exception:
@@ -45,8 +45,8 @@ def try_(lazy_func, default=None, exception=Exception):
 
 @contextmanager
 def patch(obj, attr, newvalue):
-    """临时设置 obj.attr = newvalue，退出 with 块自动恢复。
-    用在 SharedMemory 里临时禁用资源追踪注册。"""
+    """临时设置 obj.attr = newvalue, 退出 with 块自动恢复.
+    用在 SharedMemory 里临时禁用资源追踪注册."""
     had_attr = hasattr(obj, attr)
     orig_value = getattr(obj, attr, None)
     setattr(obj, attr, newvalue)
@@ -60,7 +60,7 @@ def patch(obj, attr, newvalue):
 
 
 def _as_str(value) -> str:
-    """各种类型 → 短字符串，给图表图例和调试信息用。"""
+    """各种类型 → 短字符串, 给图表图例和调试信息用."""
     if isinstance(value, (Number, str)):
         return str(value)
     if isinstance(value, pd.DataFrame):
@@ -76,34 +76,34 @@ def _as_str(value) -> str:
 
 
 def _as_list(value) -> List:
-    """值 → 列表（已是非字符串序列则直接转 list）。"""
+    """值 → 列表(已是非字符串序列则直接转 list)."""
     if isinstance(value, Sequence) and not isinstance(value, str):
         return list(value)
     return [value]
 
 
 def _batch(seq):
-    """按 CPU 核心数分块，用于多进程负载均衡。"""
+    """按 CPU 核心数分块, 用于多进程负载均衡."""
     n = np.clip(int(len(seq) // (os.cpu_count() or 1)), 1, 300)
     for i in range(0, len(seq), n):
         yield seq[i:i + n]
 
 
 def _data_period(index) -> Union[pd.Timedelta, Number]:
-    """用最后 100 个时间戳的间隔中位数推断数据频率。"""
+    """用最后 100 个时间戳的间隔中位数推断数据频率."""
     values = pd.Series(index[-100:])
     return values.diff().dropna().median()
 
 
 def _strategy_indicators(strategy):
-    """遍历策略 __dict__，筛出 _Indicator 类型的属性。"""
+    """遍历策略 __dict__, 筛出 _Indicator 类型的属性."""
     return {attr: indicator
             for attr, indicator in strategy.__dict__.items()
             if isinstance(indicator, _Indicator)}.items()
 
 
 def _indicator_warmup_nbars(strategy):
-    """所有指标中最长的 NaN 前缀长度——回测要从这之后才开始。"""
+    """所有指标中最长的 NaN 前缀长度----回测要从这之后才开始."""
     if strategy is None:
         return 0
     nbars = max((np.isnan(indicator.astype(float)).argmin(axis=-1).max()
@@ -113,30 +113,30 @@ def _indicator_warmup_nbars(strategy):
 
 
 # ═══════════════════════════════════════════════════════════
-# _Array — 扩展的 NumPy ndarray
+# _Array -- 扩展的 NumPy ndarray
 # ═══════════════════════════════════════════════════════════
-# 上下文层：框架里流转的核心数据结构。带 .name 和 ._opts 元数据，
-#           既保持 ndarray 高性能，又能被框架追踪命名和绘图参数。
-# 设计层：继承 np.ndarray，重写 __new__（ndarray 是不可变对象）、
-#          __array_finalize__（切片/运算后属性传播）、
-#          __reduce__/__setstate__（pickle 序列化支持多进程）。
+# 上下文层: 框架里流转的核心数据结构.带 .name 和 ._opts 元数据, 
+#           既保持 ndarray 高性能, 又能被框架追踪命名和绘图参数.
+# 设计层: 继承 np.ndarray, 重写 __new__(ndarray 是不可变对象), 
+#          __array_finalize__(切片/运算后属性传播), 
+#          __reduce__/__setstate__(pickle 序列化支持多进程).
 class _Array(np.ndarray):
     """ndarray extended to supply .name and other arbitrary properties."""
 
     def __new__(cls, array, *, name=None, **kwargs):
         obj = np.asarray(array).view(cls)   # .view() 把已有数组转成 _Array
         obj.name = name or array.name
-        obj._opts = kwargs                  # 绘图元数据（scatter/color 等）
+        obj._opts = kwargs                  # 绘图元数据(scatter/color 等)
         return obj
 
     def __array_finalize__(self, obj):
-        # ndarray 切片/运算后 NumPy 自动调这里，把 name 和 _opts "传播"到新对象
+        # ndarray 切片/运算后 NumPy 自动调这里, 把 name 和 _opts "传播"到新对象
         if obj is not None:
             self.name = getattr(obj, 'name', '')
             self._opts = getattr(obj, '_opts', {})
 
     def __reduce__(self):
-        # pickle 序列化——多进程优化时需要把指标传给子进程
+        # pickle 序列化----多进程优化时需要把指标传给子进程
         value = super().__reduce__()
         return value[:2] + (value[2] + (self.__dict__,),)
 
@@ -145,7 +145,7 @@ class _Array(np.ndarray):
         super().__setstate__(state[:-1])
 
     def __bool__(self):
-        """取最后一个元素的布尔值，让 `if self.ma1:` 能直接用。"""
+        """取最后一个元素的布尔值, 让 `if self.ma1:` 能直接用."""
         try:
             return bool(self[-1])
         except IndexError:
@@ -163,38 +163,38 @@ class _Array(np.ndarray):
 
     @property
     def s(self) -> pd.Series:
-        """转成 pandas Series（带时间索引）。"""
+        """转成 pandas Series(带时间索引)."""
         values = np.atleast_2d(self)
         index = self._opts['index'][:values.shape[1]]
         return pd.Series(values[0], index=index, name=self.name)
 
     @property
     def df(self) -> pd.DataFrame:
-        """转成 pandas DataFrame。"""
+        """转成 pandas DataFrame."""
         values = np.atleast_2d(np.asarray(self))
         index = self._opts['index'][:values.shape[1]]
         df = pd.DataFrame(values.T, index=index, columns=[self.name] * len(values))
         return df
 
 
-# _Indicator 是 _Array 的标记子类——只用于 isinstance 区分"指标"和"普通数组"
+# _Indicator 是 _Array 的标记子类----只用于 isinstance 区分"指标"和"普通数组"
 class _Indicator(_Array):
     pass
 
 
 # ═══════════════════════════════════════════════════════════
-# _Data — OHLCV 数据访问器
+# _Data -- OHLCV 数据访问器
 # ═══════════════════════════════════════════════════════════
-# 上下文层：包裹 pd.DataFrame，但返回的是 _Array（ndarray）而非 Series，
-#           避免回测主循环中过 pandas 的性能开销。
-# 设计层：代理模式——.Close/.Open 等属性通过 __getattr__ 动态转发到列访问。
+# 上下文层: 包裹 pd.DataFrame, 但返回的是 _Array(ndarray)而非 Series, 
+#           避免回测主循环中过 pandas 的性能开销.
+# 设计层: 代理模式----.Close/.Open 等属性通过 __getattr__ 动态转发到列访问.
 class _Data:
     """Provides access to OHLCV columns as ndarray for performance."""
 
     def __init__(self, df: pd.DataFrame):
         self.__df = df
-        self.__len = len(df)                     # 当前可见长度（回测中逐步增加）
-        self.__pip: Optional[float] = None       # pip 值，惰性计算
+        self.__len = len(df)                     # 当前可见长度(回测中逐步增加)
+        self.__pip: Optional[float] = None       # pip 值, 惰性计算
         self.__cache: Dict[str, _Array] = {}     # 当前长度的切片缓存
         self.__arrays: Dict[str, _Array] = {}    # 完整数组映射
         self._update()
@@ -203,14 +203,14 @@ class _Data:
         return self.__get_array(item)            # data['Close']
 
     def __getattr__(self, item):
-        # data.Close —— 属性回退到列访问
+        # data.Close ---- 属性回退到列访问
         try:
             return self.__get_array(item)
         except KeyError:
             raise AttributeError(f"Column '{item}' not in data") from None
 
     def _set_length(self, length):
-        """回测每推进一根 K 线后调用。"""
+        """回测每推进一根 K 线后调用."""
         self.__len = length
         self.__cache.clear()
 
@@ -237,7 +237,7 @@ class _Data:
 
     @property
     def pip(self) -> float:
-        """动态推断最小价格变动单位（分析 Close 小数位数）。"""
+        """动态推断最小价格变动单位(分析 Close 小数位数)."""
         if self.__pip is None:
             self.__pip = float(
                 10**-np.median([len(s.partition('.')[-1])
@@ -281,7 +281,7 @@ class _Data:
         self.__dict__ = state
 
 
-# SharedMemory 版本兼容：Python 3.13 API 有变化
+# SharedMemory 版本兼容: Python 3.13 API 有变化
 if sys.version_info >= (3, 13):
     SharedMemory = _mpshm.SharedMemory
 else:
@@ -304,11 +304,11 @@ else:
 
 
 # ═══════════════════════════════════════════════════════════
-# SharedMemoryManager — 共享内存管理器
+# SharedMemoryManager -- 共享内存管理器
 # ═══════════════════════════════════════════════════════════
-# 上下文层：多进程优化时，把 DataFrame 写入共享内存传给子进程，
-#           比 pickle 传大数据高效得多。
-# 设计层：实现 __enter__/__exit__，用上下文管理器协议保证资源释放。
+# 上下文层: 多进程优化时, 把 DataFrame 写入共享内存传给子进程, 
+#           比 pickle 传大数据高效得多.
+# 设计层: 实现 __enter__/__exit__, 用上下文管理器协议保证资源释放.
 class SharedMemoryManager:
     def __init__(self, create=False) -> None:
         self._shms: list[SharedMemory] = []
@@ -335,7 +335,7 @@ class SharedMemoryManager:
                 raise
 
     def arr2shm(self, vals):
-        """一维数组 → 共享内存，返回 (name, shape, dtype)。"""
+        """一维数组 → 共享内存, 返回 (name, shape, dtype)."""
         assert vals.ndim == 1, (vals.ndim, vals.shape, vals)
         shm = self.SharedMemory(size=vals.nbytes, create=True)
         buf = np.ndarray(vals.shape, dtype=vals.dtype.base, buffer=shm.buf)
@@ -344,7 +344,7 @@ class SharedMemoryManager:
         return shm.name, vals.shape, vals.dtype
 
     def df2shm(self, df):
-        """整个 DataFrame → 共享内存。"""
+        """整个 DataFrame → 共享内存."""
         return tuple((
             (column, *self.arr2shm(values))
             for column, values in chain([(self._DF_INDEX_COL, df.index)], df.items())
@@ -353,14 +353,14 @@ class SharedMemoryManager:
     @staticmethod
     def shm2s(shm, shape, dtype) -> pd.Series:
         arr = np.ndarray(shape, dtype=dtype.base, buffer=shm.buf)
-        arr.setflags(write=False)   # 只读，防跨进程误改
+        arr.setflags(write=False)   # 只读, 防跨进程误改
         return pd.Series(arr, dtype=dtype)
 
     _DF_INDEX_COL = '__bt_index'
 
     @staticmethod
     def shm2df(data_shm):
-        """共享内存 → DataFrame。"""
+        """共享内存 → DataFrame."""
         shm = [SharedMemory(name=name, create=False, track=False)
                for _, name, _, _ in data_shm]
         df = pd.DataFrame({

@@ -1,13 +1,13 @@
 # ============================================================
-# backtesting/lib.py — 策略辅助函数库
+# backtesting/lib.py -- 策略辅助函数库
 # ============================================================
-# 上下文层：用户最常 import 的模块之一。提供信号判断、指标辅助、
-#           可组合策略基类、多品种回测、数据生成器等工具。
-# 功能层：crossover/cross 交叉判断、resample_apply 多时间框架、
-#           SignalStrategy/TrailingStrategy 策略基类、
-#           FractionalBacktest 分数股、MultiBacktest 多品种并行。
-# 设计层：模板方法模式（SignalStrategy/TrailingStrategy 继承 Strategy）、
-#          生成器（random_ohlc_data）、调用栈自省（resample_apply 检测 init 上下文）。
+# 上下文层: 用户最常 import 的模块之一.提供信号判断, 指标辅助, 
+#           可组合策略基类, 多品种回测, 数据生成器等工具.
+# 功能层: crossover/cross 交叉判断, resample_apply 多时间框架, 
+#           SignalStrategy/TrailingStrategy 策略基类, 
+#           FractionalBacktest 分数股, MultiBacktest 多品种并行.
+# 设计层: 模板方法模式(SignalStrategy/TrailingStrategy 继承 Strategy), 
+#          生成器(random_ohlc_data), 调用栈自省(resample_apply 检测 init 上下文).
 
 """
 Collection of common building blocks, helper auxiliary functions and
@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import warnings
 from collections import OrderedDict
-from inspect import currentframe                 # 调用栈帧检测（resample_apply 用）
+from inspect import currentframe                 # 调用栈帧检测(resample_apply 用)
 from itertools import chain, compress, count
 from numbers import Number
 from typing import Callable, Generator, Optional, Sequence, Union
@@ -45,8 +45,8 @@ __pdoc__ = {}
 # ═══════════════════════════════════════════════════════════
 # OHLCV 和交易数据重采样聚合规则
 # ═══════════════════════════════════════════════════════════
-# 上下文层：高频率 → 低频率重采样时，每列需要指定聚合方式。
-# 设计层：OrderedDict 显式表达"列顺序重要"的意图。
+# 上下文层: 高频率 → 低频率重采样时, 每列需要指定聚合方式.
+# 设计层: OrderedDict 显式表达"列顺序重要"的意图.
 
 OHLCV_AGG = OrderedDict((
     ('Open', 'first'),
@@ -55,7 +55,7 @@ OHLCV_AGG = OrderedDict((
     ('Close', 'last'),
     ('Volume', 'sum'),
 ))
-"""OHLCV 重采样聚合规则。用法：df.resample('4H', label='right').agg(OHLCV_AGG)"""
+"""OHLCV 重采样聚合规则.用法: df.resample('4H', label='right').agg(OHLCV_AGG)"""
 
 TRADES_AGG = OrderedDict((
     ('Size', 'sum'),
@@ -69,7 +69,7 @@ TRADES_AGG = OrderedDict((
     ('ExitTime', 'last'),
     ('Duration', 'sum'),
 ))
-"""交易数据重采样聚合规则。"""
+"""交易数据重采样聚合规则."""
 
 _EQUITY_AGG = {
     'Equity': 'last',
@@ -84,22 +84,22 @@ _EQUITY_AGG = {
 
 def barssince(condition: Sequence[bool], default=np.inf) -> int:
     """
-    返回离 condition 最近一次为 True 过了多少根 K 线。
-    用 compress + reversed 实现——函数式风格。
+    返回离 condition 最近一次为 True 过了多少根 K 线.
+    用 compress + reversed 实现----函数式风格.
     """
     return next(compress(range(len(condition)), reversed(condition)), default)
 
 
 def cross(series1: Sequence, series2: Sequence) -> bool:
-    """双向交叉判断——series1 上穿或下穿 series2 都算。"""
+    """双向交叉判断----series1 上穿或下穿 series2 都算."""
     return crossover(series1, series2) or crossover(series2, series1)
 
 
 def crossover(series1: Sequence, series2: Sequence) -> bool:
     """
-    上穿判断——run_demo.py 的 SmaCross 就用这个。
-    输入可以是 ndarray、pd.Series 或常数。
-    判断逻辑：前一 bar series1 < series2 且当前 bar series1 > series2。
+    上穿判断----run_demo.py 的 SmaCross 就用这个.
+    输入可以是 ndarray, pd.Series 或常数.
+    判断逻辑: 前一 bar series1 < series2 且当前 bar series1 > series2.
     """
     series1 = (
         series1.values if isinstance(series1, pd.Series) else
@@ -119,15 +119,15 @@ def plot_heatmaps(heatmap: pd.Series,
                   agg: Union[str, Callable] = 'max',
                   *, ncols: int = 3, plot_width: int = 1200,
                   filename: str = '', open_browser: bool = True):
-    """参数热力图——_plotting.plot_heatmaps 的代理，方便用户直接在 lib 层调用。"""
+    """参数热力图----_plotting.plot_heatmaps 的代理, 方便用户直接在 lib 层调用."""
     return _plot_heatmaps(heatmap, agg, ncols, filename, plot_width, open_browser)
 
 
 def quantile(series: Sequence, quantile: Union[None, float] = None):
     """
-    分位数工具。
-    quantile=None → 返回最新值在历史中的分位排名。
-    quantile=0~1 → 返回序列在该分位的值。
+    分位数工具.
+    quantile=None → 返回最新值在历史中的分位排名.
+    quantile=0~1 → 返回序列在该分位的值.
     """
     if quantile is None:
         try:
@@ -147,8 +147,8 @@ def compute_stats(*, stats: pd.Series, data: pd.DataFrame,
                   trades: pd.DataFrame = None,
                   risk_free_rate: float = 0.) -> pd.Series:
     """
-    对部分交易（如仅多单）重新计算统计指标。
-    如果只给 trades 子集，会重新构建权益曲线。
+    对部分交易(如仅多单)重新计算统计指标.
+    如果只给 trades 子集, 会重新构建权益曲线.
     """
     equity = stats._equity_curve.Equity
     if trades is None:
@@ -169,9 +169,9 @@ def resample_apply(rule: str,
                    *args, agg: Optional[Union[str, dict]] = None,
                    **kwargs):
     """
-    多时间框架指标——把数据重采样到 rule 频率后计算 func。
-    如果在 Strategy.init() 内调用，结果自动通过 self.I() 注册为指标。
-    关键：用 inspect.currentframe() 遍历调用栈检测 init 上下文。
+    多时间框架指标----把数据重采样到 rule 频率后计算 func.
+    如果在 Strategy.init() 内调用, 结果自动通过 self.I() 注册为指标.
+    关键: 用 inspect.currentframe() 遍历调用栈检测 init 上下文.
     """
     if func is None:
         def func(x, *_, **__):
@@ -189,11 +189,11 @@ def resample_apply(rule: str,
             agg = {column: OHLCV_AGG.get(column, 'last')
                    for column in series.columns}
 
-    # label='right' 是关键——用区间右端点避免 look-ahead bias
+    # label='right' 是关键----用区间右端点避免 look-ahead bias
     resampled = series.resample(rule, label='right').agg(agg).dropna()
     resampled.name = _as_str(series) + '[' + rule + ']'
 
-    # 调用栈检测——向上最多 3 帧找 Strategy.init 的 self.I
+    # 调用栈检测----向上最多 3 帧找 Strategy.init 的 self.I
     frame, level = currentframe(), 0
     while frame and level <= 3:
         frame = frame.f_back
@@ -215,7 +215,7 @@ def resample_apply(rule: str,
                 result = pd.DataFrame(result.T)
         if not isinstance(result.index, pd.DatetimeIndex):
             result.index = resampled.index
-        # ffill 向前填充——避免用未来数据
+        # ffill 向前填充----避免用未来数据
         result = result.reindex(index=series.index.union(resampled.index),
                                 method='ffill').reindex(series.index)
         return result
@@ -234,9 +234,9 @@ def random_ohlc_data(example_data: pd.DataFrame, *,
                      random_state: Optional[int] = None
                      ) -> Generator[pd.DataFrame, None, None]:
     """
-    无限生成随机 OHLC 数据，保持原始数据的统计分布。
-    用于蒙特卡洛模拟和策略压力测试。
-    Python 高级特性：生成器（while True + yield）。
+    无限生成随机 OHLC 数据, 保持原始数据的统计分布.
+    用于蒙特卡洛模拟和策略压力测试.
+    Python 高级特性: 生成器(while True + yield).
     """
     def shuffle(x):
         return x.sample(frac=frac, replace=frac > 1,
@@ -262,9 +262,9 @@ def random_ohlc_data(example_data: pd.DataFrame, *,
 
 class SignalStrategy(Strategy):
     """
-    基于信号向量的策略——在 init() 里设置进场/出场信号数组，
-    next() 自动处理订单。接近"矢量化回测"。
-    使用方式：继承后调用 set_signal(entry, exit)。
+    基于信号向量的策略----在 init() 里设置进场/出场信号数组, 
+    next() 自动处理订单.接近"矢量化回测".
+    使用方式: 继承后调用 set_signal(entry, exit).
     """
     __entry_signal = (0,)
     __exit_signal = (False,)
@@ -272,7 +272,7 @@ class SignalStrategy(Strategy):
     def set_signal(self, entry_size: Sequence[float],
                    exit_portion: Optional[Sequence[float]] = None,
                    *, plot: bool = True):
-        """设置进场/出场信号（散点图模式可视化）。"""
+        """设置进场/出场信号(散点图模式可视化)."""
         self.__entry_signal = self.I(
             lambda: pd.Series(entry_size, dtype=float).replace(0, np.nan),
             name='entry size', plot=plot, overlay=False, scatter=True,
@@ -306,8 +306,8 @@ class SignalStrategy(Strategy):
 
 class TrailingStrategy(Strategy):
     """
-    跟踪止损策略——以 ATR（平均真实波幅）的倍数为距离跟踪价格。
-    多头止损价只升不降，空头止损价只降不升。
+    跟踪止损策略----以 ATR(平均真实波幅)的倍数为距离跟踪价格.
+    多头止损价只升不降, 空头止损价只降不升.
     """
     __n_atr = 6.
     __atr = None
@@ -317,7 +317,7 @@ class TrailingStrategy(Strategy):
         self.set_atr_periods()
 
     def set_atr_periods(self, periods: int = 100):
-        """设置 ATR 计算周期（默认 100 确保稳定）。"""
+        """设置 ATR 计算周期(默认 100 确保稳定)."""
         hi, lo, c_prev = (self.data.High, self.data.Low,
                           pd.Series(self.data.Close).shift(1))
         tr = np.max([hi - lo, (c_prev - hi).abs(),
@@ -326,11 +326,11 @@ class TrailingStrategy(Strategy):
         self.__atr = atr
 
     def set_trailing_sl(self, n_atr: float = 6):
-        """设置跟踪止损距离为 n_atr 倍 ATR。"""
+        """设置跟踪止损距离为 n_atr 倍 ATR."""
         self.__n_atr = n_atr
 
     def set_trailing_pct(self, pct: float = .05):
-        """设置跟踪止损距离为价格百分比（内部转成 ATR 倍数）。"""
+        """设置跟踪止损距离为价格百分比(内部转成 ATR 倍数)."""
         assert 0 < pct < 1, 'Need pct= as rate, i.e. 5% == 0.05'
         pct_in_atr = np.mean(self.data.Close * pct / self.__atr)
         self.set_trailing_sl(pct_in_atr)
@@ -355,8 +355,8 @@ class TrailingStrategy(Strategy):
 
 class FractionalBacktest(Backtest):
     """
-    分数股回测——把价格×unit、成交量÷unit，用整股回测等价分数股。
-    Python 高级特性：适配器模式。
+    分数股回测----把价格×unit, 成交量÷unit, 用整股回测等价分数股.
+    Python 高级特性: 适配器模式.
     """
     def __init__(self, data, *args,
                  fractional_unit=1 / 100e6, **kwargs):
@@ -393,7 +393,7 @@ class FractionalBacktest(Backtest):
         return result
 
 
-# 防止 pdoc3 文档化 Strategy 子类的 __init__（信息量低）
+# 防止 pdoc3 文档化 Strategy 子类的 __init__(信息量低)
 for cls in list(globals().values()):
     if isinstance(cls, type) and issubclass(cls, Strategy):
         __pdoc__[f'{cls.__name__}.__init__'] = False
@@ -401,8 +401,8 @@ for cls in list(globals().values()):
 
 class MultiBacktest:
     """
-    多品种并行回测——同一策略在多个数据集上并行运行。
-    用多进程 + 共享内存，避免 pickle 大数据集。
+    多品种并行回测----同一策略在多个数据集上并行运行.
+    用多进程 + 共享内存, 避免 pickle 大数据集.
     """
     def __init__(self, df_list, strategy_cls, **kwargs):
         self._dfs = df_list
@@ -447,9 +447,9 @@ class MultiBacktest:
 
 
 # ═══════════════════════════════════════════════════════════
-# __all__ — 自动生成模块公开 API
+# __all__ -- 自动生成模块公开 API
 # ═══════════════════════════════════════════════════════════
-# 动态遍历全局符号：可调用且来自本模块，或全大写常量，且不以 _ 开头
+# 动态遍历全局符号: 可调用且来自本模块, 或全大写常量, 且不以 _ 开头
 
 __all__ = [getattr(v, '__name__', k)
            for k, v in globals().items()
