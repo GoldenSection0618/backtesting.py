@@ -2,7 +2,7 @@
 
 ## 1. 项目概述与选题理由
 
-Backtesting.py 是一个面向 Python 的金融策略回测框架, 由开发者 kernc 在 GitHub 上开源维护。用户通过继承 `Strategy` 基类并实现 `init()` 和 `next()` 方法, 即可在历史行情数据上验证交易策略的表现。框架内部封装了事件驱动的回测引擎、订单撮合模型、交易/仓位状态管理、风险与收益统计计算以及基于 Bokeh 的交互式可视化, 构成了一个完整的回测工具链。
+Backtesting.py 是一个面向 Python 的金融策略回测框架, 由开发者 kernc 在 GitHub 上开源维护。原项目在 GitHub 上的关注度 (stars) 明显超过 100, 符合课程推荐从高关注度开源项目中选题的建议。用户通过继承 `Strategy` 基类并实现 `init()` 和 `next()` 方法, 即可在历史行情数据上验证交易策略的表现。框架内部封装了事件驱动的回测引擎、订单撮合模型、交易/仓位状态管理、风险与收益统计计算以及基于 Bokeh 的交互式可视化, 构成了一个完整的回测工具链。
 
 选择 Backtesting.py 作为《Python 高级程序设计》大作业的复现对象, 基于以下理由:
 
@@ -17,7 +17,7 @@ Backtesting.py 是一个面向 Python 的金融策略回测框架, 由开发者 
 |:--|:--|:--|
 | 选择真实开源 Python 工程, 中等规模, 约 2000 行有效代码 | Backtesting.py, 纳入注释统计的文件 19 个, 总计 5018 行、4248 非空行 | `line_count_report.txt` |
 | 独立搭建环境、安装依赖, 确保样例代码成功运行, 并贴图展示运行结果 | 创建独立 conda 环境, 通过 `constraints.txt` 锁定 pandas<3, `run_demo.py` 成功运行并输出约 30 项统计指标, 生成 `sma_cross_result.html` | `01_env_install.png`, `02_run_demo_stats.png`, `03_html_plot.png` |
-| 对每一行、每一个关键块提供中文注释, 注释覆盖功能层、设计层、上下文层 | 19 个文件全部添加注释, 覆盖功能层(做什么)、设计层(为什么这样写, 用了什么特性)、上下文层(在整个框架中的位置) | `ANNOTATION_GUIDE.md` 及全部源码文件 |
+| 对每一行、每一个关键块提供中文注释, 注释覆盖功能层、设计层、上下文层 | 纳入范围的 19 个源码、配置和辅助脚本文件均完成中文注释或解释; 其中核心引擎、工具模块、统计模块和配置文件以逐行注释为主, 绘图模块、测试套件等长文件以类级、方法级和关键块注释为主, 整体覆盖功能层、设计层和上下文层 | 仓库全部注释文件及 `ANNOTATION_GUIDE.md` |
 | 在复现基础上进行必要代码规范调整, 并撰写详尽剖析报告 | 新增 `constraints.txt` 锁定复现环境、`run_demo.py` 运行示例、`ANNOTATION_GUIDE.md` 注释规范、`COURSEWORK_SCOPE.md` 范围说明; 未修改核心回测逻辑; 本报告即为剖析报告 | 本文件及仓库 `coursework-annotated` 分支 |
 
 ![代码规模统计结果](report_assets/04_line_count.png)
@@ -41,7 +41,7 @@ conda activate backtesting-coursework
 python -m pip install -r requirements.txt -c constraints.txt
 ```
 
-`requirements.txt` 中的 `.[test]` 语法表示从当前目录以可编辑模式安装 backtesting 包, 并附带 extras_require 中定义的 `test` 可选依赖组。实际运行时依赖在 `setup.py` 的 `install_requires` 中声明。
+`requirements.txt` 中的 `.[test]` 表示从当前目录安装 backtesting 项目, 并同时安装 `setup.py` 的 `extras_require` 中定义的 `test` 可选依赖组 (matplotlib, scikit-learn, sambo, tqdm 等)。实际运行时核心依赖 (numpy, pandas, bokeh) 在 `setup.py` 的 `install_requires` 中声明。注意这里不是 editable install; 如果需要可编辑安装, 应使用 `pip install -e .[test]`。
 
 `constraints.txt` 中仅包含 `pandas<3`, 用于强制安装 pandas 2.x 版本。Backtesting.py 的 `FractionalBacktest` 类在 pandas 3.x 环境下会对只读 NumPy 数组执行原地除法操作 (`indicator /= self._fractional_unit`), 导致 `ValueError: output array is read-only`。约束 pandas 版本后该问题不再出现。
 
@@ -367,12 +367,7 @@ def __getattr__(self, item):
 
 ### 8.3 测试验证
 
-在约束环境 (`pandas<3`) 下运行 `python -m backtesting.test`, 结果如下:
-
-- 76 tests OK
-- 1 skipped: `test_examples` (需要已删除的 `doc/` 目录)
-
-跳过的原因已在 `COURSEWORK_SCOPE.md` 中说明: `doc/` 目录包含文档站和示例 notebook, 不属于本次课程注释范围, 因此从分支中删除。该跳过项不影响核心回测功能的验证。
+在使用 `python -m pip install -r requirements.txt -c constraints.txt` 安装依赖后, 执行 `python -m backtesting.test`, 测试结果为 76 tests OK, 1 skipped。跳过项为 `test_examples`, 原因是课程精简范围中删除了 `doc/` 示例文档目录, 属于预期行为, 不影响核心回测功能的验证。
 
 ## 9. 代码规范调整说明
 
