@@ -3,9 +3,9 @@
 我选择 [Backtesting.py](https://github.com/kernc/backtesting.py) 作为《Python 高级程序设计》大作业的复现和注释对象。
 这是一个 GitHub 上真实的 Python 回测框架, 代码规模适中 (~6300 行), 用到了元类、上下文管理器、生成器、ndarray 子类化等 Python 高级特性。
 
-## 我保留了哪些文件
+## 文件分类
 
-这是我保留的核心源码 (也是逐行注释的对象):
+### 核心源码 (逐行或关键块注释)
 
 - [`backtesting/backtesting.py`](backtesting/backtesting.py) -- 回测引擎, 约 1280 行, 包含 Strategy/Order/Trade/_Broker/Backtest
 - [`backtesting/lib.py`](backtesting/lib.py) -- 策略工具库 (crossover, resample_apply, SignalStrategy 等)
@@ -18,7 +18,7 @@
 - [`backtesting/test/__main__.py`](backtesting/test/__main__.py) -- `python -m backtesting.test` 入口
 - [`backtesting/test/_test.py`](backtesting/test/_test.py) -- 76 个测试用例
 
-工程配置文件 (也做了注释):
+### 工程配置 (已注释)
 
 - [`setup.py`](setup.py) -- 安装/打包/依赖声明
 - [`setup.cfg`](setup.cfg) -- flake8, mypy, coverage 配置
@@ -27,20 +27,20 @@
 - [`requirements.txt`](requirements.txt) -- pip 安装入口
 - [`.gitignore`](.gitignore) -- Git 忽略规则
 
-我额外加的辅助文件:
+### 辅助交付件
 
-- [`run_demo.py`](run_demo.py) -- 最小的 SMA 交叉策略, 用来验证工程能跑
-- [`tools/count_lines.py`](tools/count_lines.py) -- 统计代码行数
-- [`line_count_report.txt`](line_count_report.txt) -- 行数统计结果 (19 个文件, ~6300 行 / ~5300 非空行)
-- [`constraints.txt`](constraints.txt) -- 锁定 pandas<3, 避免 FractionalBacktest 测试报错
-- [`ANNOTATION_GUIDE.md`](ANNOTATION_GUIDE.md) -- 我的注释规范
+- [`run_demo.py`](run_demo.py) -- SMA 交叉策略运行示例
+- [`tools/count_lines.py`](tools/count_lines.py) -- 代码行数统计
+- [`line_count_report.txt`](line_count_report.txt) -- 行数统计结果 (19 个文件, ~6300 / ~5300 非空行)
+- [`constraints.txt`](constraints.txt) -- 环境版本约束 (锁定 pandas<3)
+- [`ANNOTATION_GUIDE.md`](ANNOTATION_GUIDE.md) -- 注释规范
 - 本文件
 
-## 我没动这些文件
+### 保留原貌
 
-- [`README.md`](README.md) -- 原作者的项目说明
+- [`README.md`](README.md) -- 原项目说明
 - [`LICENSE.md`](LICENSE.md) -- [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html) 协议
-- `backtesting/test/GOOG.csv`, `BTCUSD.csv`, `EURUSD.csv` -- 行情数据, 改了就跑不起来了
+- `backtesting/test/GOOG.csv`, `BTCUSD.csv`, `EURUSD.csv` -- 行情数据, 修改会破坏读取
 
 ## 运行结果
 
@@ -48,9 +48,9 @@
 python run_demo.py
 ```
 
-能正常输出约 30 项回测统计 (收益率、夏普比、最大回撤等), 并生成 `sma_cross_result.html` 交互式图表。
+正常输出约 30 项回测统计 (收益率、夏普比、最大回撤等), 生成 `sma_cross_result.html` 交互式图表。
 
-完整测试 `python -m backtesting.test`: 76 tests, 1 error, 1 skipped。
+`python -m backtesting.test`: 76 tests, 1 error, 1 skipped。
 
-- 1 error: FractionalBacktest -- pandas 3.x 下[上游兼容性问题](https://github.com/kernc/backtesting.py/issues/134) (数组只读), 通过 `constraints.txt` 锁定 pandas<3 可避开
-- 1 skipped: test_examples -- 我把 doc/ 目录删了, 测试找不到示例脚本, 这是预期行为
+- 1 error: FractionalBacktest -- pandas 3.x 下[上游兼容性问题](https://github.com/kernc/backtesting.py/issues/134) (数组只读), `constraints.txt` 锁定 pandas<3 可避开
+- 1 skipped: test_examples -- doc/ 目录已删除, 预期行为
