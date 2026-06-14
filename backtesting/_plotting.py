@@ -7,7 +7,6 @@
 # 设计层：基于 Bokeh——ColumnDataSource、CustomJS、HoverTool、
 #           CrosshairTool 等组件。X 轴平移/缩放时通过 JS 回调
 #           自动调整 Y 轴范围（autoscale_cb.js）。
-# 注意：本模块按课程要求做"关键块说明"，非逐行注释。
 
 from __future__ import annotations
 
