@@ -1,59 +1,45 @@
 # ============================================================
-# pyproject.toml — 项目元数据与工具配置（PEP 518/621）
-# 上下文层：Python 生态的标准项目配置文件，被 pip、build、
-#           ruff、mypy 等工具读取。本文件中主要配置 ruff linter。
-# 设计层：TOML 格式（Tom's Obvious, Minimal Language），
-#          比 setup.cfg 的 INI 格式表达力更强，是 Python 社区的新标准。
+# pyproject.toml — ruff 代码检查配置
 # ============================================================
+# 上下文层：ruff 是用 Rust 写的快速 Python linter，替代 flake8 + isort。
 
-# --- ruff 代码检查工具配置 ---
-# 上下文层：ruff 是用 Rust 编写的快速 Python linter/formatter，
-#          在本项目中替代 flake8 + isort 等多工具的职责。
 [tool.ruff]
-
-# 功能层：排除不需要检查的目录
 exclude = [
-    '.git',          # Git 仓库元数据
-    '.eggs',         # setuptools 构建临时目录
-    '__pycache__',   # Python 字节码缓存
-    'doc/examples',  # 文档示例代码（已从课程分支删除）
+    '.git',
+    '.eggs',
+    '__pycache__',
+    'doc/examples',
 ]
 
-# 功能层：忽略的 lint 规则及其原因
+# 忽略的规则及原因
 ignore = [
-    'UP006',   # 允许使用 typing.Optional 等旧式类型注解
-    'UP007',   # 允许使用 typing.Union 而非 X | Y 语法
-    'UP009',   # 允许使用 # type: ignore 注释
-    'N802',    # 允许函数名使用大写字母（如 Strategy.I）
-    'N806',    # 允许变量名使用大写字母（如 GOOG 常量）
-    'C901',    # 允许函数/方法复杂度较高（回测引擎逻辑复杂）
-    'B008',    # 允许在函数参数默认值中直接调用函数
-    'B011',    # 允许 assert False 的写法
-    'RUF002',  # 允许文档字符串中使用模糊的 ruff 规则代码
+    'UP006',   # 不强制新版类型注解（允许 Optional 等旧写法）
+    'UP007',   # 不强制 X | Y 替代 Union
+    'UP009',   # 允许 # type: ignore
+    'N802',    # 允许大写函数名（如 Strategy.I）
+    'N806',    # 允许大写变量名
+    'C901',    # 允许复杂函数（回测引擎本就复杂）
+    'B008',    # 允许参数默认值中直接调用
+    'B011',    # 允许 assert False
+    'RUF002',  # 允许 docstring 中的模糊规则编号
 ]
 
-# 功能层：每行最大字符数
 line-length = 100
 
-# 功能层：启用的 lint 规则集
 select = [
-    'I',     # isort：import 排序
-    'E',     # pycodestyle：风格错误
-    'F',     # pyflakes：逻辑错误检测
-    'W',     # pycodestyle：风格警告
-    'UP',    # pyupgrade：建议使用新版 Python 语法
-    'N',     # pep8-naming：命名规范
-    'C',     # mccabe：圈复杂度
-    'B',     # flake8-bugbear：常见 bug 模式
-    'T',     # flake8-print：print 语句检测
+    'I',     # import 排序
+    'E',     # 风格错误
+    'F',     # 逻辑错误
+    'W',     # 风格警告
+    'UP',    # 建议升级语法
+    'N',     # 命名规范
+    'C',     # 圈复杂度
+    'B',     # 常见 bug
+    'T',     # print 检测
     'RUF',   # ruff 自有规则
-    'YTT',   # flake8-2020：年份硬编码检测
+    'YTT',   # 年份硬编码
 ]
 
-# --- ruff 对 PEP 8 命名约定的特殊配置 ---
 [tool.ruff.pep8-naming]
-# 功能层：允许 `l`、`h` 作为变量名（常见数学/图形学缩写）
-ignore-names = [
-    'l',
-    'h',
-]
+# l 和 h 作为变量名允许（数学/图形学常见）
+ignore-names = ['l', 'h']

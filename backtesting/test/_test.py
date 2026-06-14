@@ -1,15 +1,10 @@
 # ============================================================
-# backtesting/test/_test.py — Backtesting.py 完整测试套件
+# backtesting/test/_test.py — 完整测试套件
 # ============================================================
-# 上下文层：本模块包含对 Backtesting.py 框架的全面测试。
-#           运行方式：python -m backtesting.test
-#           测试覆盖：回测执行、订单撮合、佣金计算、参数优化、
-#           图表绘制、统计指标、工具函数和回归防护。
-# 设计层：Python 标准库 unittest 框架，按功能分 8 个 TestCase 子类：
-#           TestBacktest（引擎）、TestStrategy（策略）、TestOptimize（优化）、
-#           TestPlot（绘图）、TestLib（工具库）、TestUtil（基础设施）、
-#           TestDocs（文档）、TestRegressions（回归防护）。
-# ============================================================
+# 上下文层：运行方式 python -m backtesting.test。
+#           76 个测试用例覆盖回测执行、订单撮合、佣金、优化、
+#           绘图、统计、工具函数和回归防护。
+# 设计层：unittest 框架，8 个 TestCase 子类按功能分组。
 
 import inspect
 import multiprocessing as mp
