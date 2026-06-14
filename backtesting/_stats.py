@@ -158,8 +158,10 @@ def compute_stats(
             freq).last().dropna().pct_change()
         gmean_day_return = geometric_mean(day_returns)
 
+    # 年化收益率：几何平均日收益按复利换算到年
     annualized_return = (1 + gmean_day_return)**annual_trading_days - 1
     s.loc['Return (Ann.) [%]'] = annualized_return * 100
+    # 年化波动率：日收益的方差按年化系数放大（复利假设下的波动率公式）
     s.loc['Volatility (Ann.) [%]'] = np.sqrt(
         (day_returns.var(ddof=int(bool(day_returns.shape)))
          + (1 + gmean_day_return)**2)**annual_trading_days
@@ -173,8 +175,10 @@ def compute_stats(
         ) * 100 if time_in_years else np.nan
 
     # ====== 风险调整收益 ======
+    # Sharpe：年化超额收益 / 年化波动率（衡量每单位总风险的超额回报）
     s.loc['Sharpe Ratio'] = (s.loc['Return (Ann.) [%]'] - risk_free_rate * 100) / (
         s.loc['Volatility (Ann.) [%]'] or np.nan)
+    # Sortino：类似 Sharpe 但分母只用下行波动率（只惩罚亏损侧的波动）
     with np.errstate(divide='ignore'):
         s.loc['Sortino Ratio'] = (annualized_return - risk_free_rate) / (
             np.sqrt(np.mean(day_returns.clip(-np.inf, 0)**2))

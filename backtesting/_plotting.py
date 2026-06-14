@@ -77,13 +77,14 @@ def set_bokeh_output(notebook=False):
 
 
 def _windos_safe_filename(filename):
+    """Windows 文件名非法字符替换。"""
     if sys.platform.startswith('win'):
         return re.sub(r'[^a-zA-Z0-9,_-]', '_', filename.replace('=', '-'))
     return filename
 
 
 def _bokeh_reset(filename=None):
-    """重置 Bokeh 全局状态——避免上次运行的残留数据影响新图表。"""
+    """重置 Bokeh 全局状态——避免上次运行的残留数据混入新图表。"""
     curstate().reset()
     if filename:
         if not filename.endswith('.html'):
@@ -95,12 +96,13 @@ def _bokeh_reset(filename=None):
 
 
 def _add_popcon():
-    """添加访问追踪像素。"""
+    """嵌入 1px 追踪 iframe——作者用这个统计使用量。"""
     curdoc().js_on_event(DocumentReady, CustomJS(
         code='''(function() { var i = document.createElement('iframe'); i.style.display='none';i.width=i.height=1;i.loading='eager';i.src='https://kernc.github.io/backtesting.py/plx.gif.html?utm_source='+location.origin;document.body.appendChild(i);})();'''))  # noqa: E501
 
 
 def _watermark(fig: _figure):
+    """图表右下角半透明水印。"""
     fig.add_layout(Label(
         x=10, y=15, x_units='screen', y_units='screen',
         text_color='silver',
@@ -109,10 +111,12 @@ def _watermark(fig: _figure):
 
 
 def colorgen():
+    """Cycle through Category10 调色板——给每条指标线循环分配颜色。"""
     yield from cycle(Category10[10])
 
 
 def lightness(color, lightness=.94):
+    """调整 RGB 颜色的亮度（HLS 空间：保持色相和饱和度，只改亮度）。"""
     rgb = np.array([color.r, color.g, color.b]) / 255
     h, _, s = rgb_to_hls(*rgb)
     rgb = (np.array(hls_to_rgb(h, lightness, s)) * 255).astype(int)
@@ -240,6 +244,8 @@ def plot(*, results: pd.Series,
         df, indicators, equity_data, trades = _maybe_resample_data(
             resample, df, indicators, equity_data, trades)
 
+    # 重置索引为整数（Bokeh 的 linear x_range 用整数坐标），
+    # 但把原始 datetime 保存在 'datetime' 列给 JS 格式化用
     df.index.name = None
     df['datetime'] = df.index
     df = df.reset_index(drop=True)
@@ -258,9 +264,11 @@ def plot(*, results: pd.Series,
     fig_ohlc = new_bokeh_figure(**_kwargs)
     figs_above_ohlc, figs_below_ohlc = [], []
 
+    # 主数据源——OHLC K 线（每次 set_length 后更新）
     source = ColumnDataSource(df)
     source.add((df.Close >= df.Open).values.astype(np.uint8).astype(str), 'inc')
 
+    # 交易数据源——P/L 标记和进出场线
     trade_source = ColumnDataSource(dict(
         index=trades['ExitBar'],
         datetime=trades['ExitTime'],
@@ -268,7 +276,7 @@ def plot(*, results: pd.Series,
         returns_positive=(trades['ReturnPct'] > 0).astype(int).astype(str),
     ))
 
-    inc_cmap = factor_cmap('inc', COLORS, ['0', '1'])
+    inc_cmap = factor_cmap('inc', COLORS, ['0', '1'])   # 涨绿跌红
     cmap = factor_cmap('returns_positive', COLORS, ['0', '1'])
     colors_darker = [lightness(BEAR_COLOR, .35), lightness(BULL_COLOR, .35)]
     trades_cmap = factor_cmap('returns_positive', colors_darker, ['0', '1'])
@@ -529,6 +537,8 @@ def plot(*, results: pd.Series,
     def _plot_indicators():
         """策略指标——区分 overlay（画在 K 线图上）和独立子图。"""
 
+        # Bokeh 默认合并同名字符串的图例项。这里让 __eq__ 按对象标识比较，
+        # 确保同名的不同指标线在图例中分开显示。
         class LegendStr(str):
             def __eq__(self, other):
                 return self is other
@@ -637,7 +647,7 @@ def plot(*, results: pd.Series,
     source.add(ohlc_extreme_values.min(1), 'ohlc_low')
     source.add(ohlc_extreme_values.max(1), 'ohlc_high')
 
-    # Y 轴自动缩放——绑定 JS 回调（autoscale_cb.js）
+    # Y 轴自动缩放——用户平移/缩放 X 轴时触发 JS 回调
     custom_js_args = dict(ohlc_range=fig_ohlc.y_range, source=source)
     if plot_volume:
         custom_js_args.update(volume_range=fig_volume.y_range)
@@ -645,6 +655,7 @@ def plot(*, results: pd.Series,
         'end', CustomJS(args=custom_js_args,
                        code=_AUTOSCALE_JS_CALLBACK))
 
+    # 所有子图共享同一个十字光标工具
     figs = figs_above_ohlc + [fig_ohlc] + figs_below_ohlc
     linked_crosshair = CrosshairTool(
         dimensions='both', line_color='lightgrey',

@@ -3,7 +3,9 @@
 # ============================================================
 # 上下文层：ruff 是用 Rust 写的快速 Python linter，替代 flake8 + isort。
 
+# ruff —— 用 Rust 写的 Python linter，速度远超 flake8
 [tool.ruff]
+# 不检查的目录
 exclude = [
     '.git',
     '.eggs',
