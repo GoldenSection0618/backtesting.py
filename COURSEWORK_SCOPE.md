@@ -1,7 +1,7 @@
 # 课程大作业范围说明
 
 我选择 [Backtesting.py](https://github.com/kernc/backtesting.py) 作为《Python 高级程序设计》大作业的复现和注释对象。
-这是一个 GitHub 上真实的 Python 回测框架, 代码规模适中 (~6300 行), 用到了元类、上下文管理器、生成器、ndarray 子类化等 Python 高级特性。
+纳入注释统计的文件共 19 个, 总计 5018 行、4248 非空行, 超过约 2000 行有效代码要求。工程用到了元类、上下文管理器、生成器、ndarray 子类化等 Python 高级特性。
 
 ## 文件分类
 
@@ -31,7 +31,7 @@
 
 - [`run_demo.py`](run_demo.py) -- SMA 交叉策略运行示例
 - [`tools/count_lines.py`](tools/count_lines.py) -- 代码行数统计
-- [`line_count_report.txt`](line_count_report.txt) -- 行数统计结果 (19 个文件, ~6300 / ~5300 非空行)
+- [`line_count_report.txt`](line_count_report.txt) -- 行数统计结果: 19 个文件, 5018 行, 4248 非空行
 - [`constraints.txt`](constraints.txt) -- 环境版本约束 (锁定 pandas<3)
 - [`ANNOTATION_GUIDE.md`](ANNOTATION_GUIDE.md) -- 注释规范
 - 本文件
@@ -48,9 +48,6 @@
 python run_demo.py
 ```
 
-正常输出约 30 项回测统计 (收益率、夏普比、最大回撤等), 生成 `sma_cross_result.html` 交互式图表。
+使用 `python -m pip install -r requirements.txt -c constraints.txt` 安装后, pandas 被约束在 3.0 以下, 避免了 pandas 3.x 下 FractionalBacktest 的只读数组兼容性问题。`run_demo.py` 成功输出统计结果并生成 `sma_cross_result.html`。
 
-`python -m backtesting.test`: 76 tests, 1 error, 1 skipped。
-
-- 1 error: FractionalBacktest -- pandas 3.x 下[上游兼容性问题](https://github.com/kernc/backtesting.py/issues/134) (数组只读), `constraints.txt` 锁定 pandas<3 可避开
-- 1 skipped: test_examples -- doc/ 目录已删除, 预期行为
+`python -m backtesting.test` 在约束环境下通过: 76 tests OK, 1 skipped (test_examples -- doc/ 目录已删除, 预期行为)。
