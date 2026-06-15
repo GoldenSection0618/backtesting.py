@@ -22,6 +22,8 @@
 
 ![代码规模统计结果](report_assets/04_line_count.png)
 
+**图1: 代码规模统计结果。** 执行 `python tools/count_lines.py` 输出纳入注释的 19 个文件的行数统计, 总计 5018 行, 4248 非空行。
+
 ## 3. 环境搭建与运行复现
 
 ### 3.1 环境准备
@@ -46,6 +48,8 @@ python -m pip install -r requirements.txt -c constraints.txt
 `constraints.txt` 中仅包含 `pandas<3`, 用于强制安装 pandas 2.x 版本。Backtesting.py 的 `FractionalBacktest` 类在 pandas 3.x 环境下会对只读 NumPy 数组执行原地除法操作 (`indicator /= self._fractional_unit`), 导致 `ValueError: output array is read-only`。约束 pandas 版本后该问题不再出现。
 
 ![环境搭建与依赖安装](report_assets/01_env_install.png)
+
+**图2: 环境搭建与依赖安装。** 使用 `python -m pip install -r requirements.txt -c constraints.txt` 安装依赖, pandas 被约束为 2.3.3, 其余核心依赖 (numpy, bokeh) 及测试可选依赖一并安装完成。
 
 ### 3.3 运行示例
 
@@ -81,6 +85,8 @@ if __name__ == "__main__":
 该策略采用两条简单移动平均线 SMA(10) 和 SMA(20): 快线上穿慢线时产生做多信号, 下穿时产生做空信号。数据源为 Google (GOOG) 2004 年至 2013 年的日线行情。执行 `python run_demo.py` 后, 终端输出约 30 项回测统计指标 (起始/结束时间、累计收益率、年化收益率、夏普比率、最大回撤、胜率、盈亏因子等), 并在当前目录生成 `sma_cross_result.html` 交互式图表。
 
 ![运行 run_demo.py 后输出的回测统计结果](report_assets/02_run_demo_stats.png)
+
+**图3: 运行 run_demo.py 后输出的回测统计结果。** 终端打印约 30 项指标, 包括起止时间、累计收益率、年化收益率、夏普比率、最大回撤、胜率和盈亏因子等, 底部显示 `Plot saved to sma_cross_result.html`。
 
 ## 4. 工程目录结构与注释范围
 
@@ -319,6 +325,8 @@ def __getattr__(self, item):
 `sma_cross_result.html` 是一个可交互的 Bokeh 图表, 从上到下依次展示权益曲线 (含峰值/终值标记和最大回撤区间), P/L 盈亏标记 (每笔交易的三角形标记, 绿色表示盈利, 红色表示亏损), 主 OHLC K 线图 (叠加 SMA(10) 和 SMA(20) 均线), 以及成交量柱状图。用户可在浏览器中对图表进行平移, 缩放和悬停查看详情。
 
 ![sma_cross_result.html 交互式可视化结果](report_assets/03_html_plot.png)
+
+**图4: sma_cross_result.html 交互式可视化结果。** 从上到下依次为权益曲线 (含峰值/终值/回撤标记), P/L 盈亏标记 (三角形), OHLC K 线图 (叠加 SMA(10)/SMA(20)), 以及成交量柱状图。支持平移, 缩放和悬停交互。
 
 ### 8.3 测试验证
 
