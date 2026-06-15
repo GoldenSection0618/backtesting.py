@@ -2,14 +2,14 @@
 
 ## 1. 项目概述与选题理由
 
-我选择 [Backtesting.py](https://github.com/kernc/backtesting.py) 作为本次大作业的复现和注释对象。它是 GitHub 上一个开源的 Python 金融策略回测框架, 截至 2026 年 6 月已有 8000+ stars, 符合课程推荐从高关注度项目中选题的建议。用它回测策略很简单: 继承 `Strategy` 基类, 实现 `init()` 和 `next()` 两个方法, 框架就会按 K 线顺序把历史数据喂给你, 你只需写买卖逻辑即可。
+我选择 [Backtesting.py](https://github.com/kernc/backtesting.py) 作为本次大作业的复现和注释对象。它是 GitHub 上一个开源的 Python 金融策略回测框架, 截至 2026 年 6 月已有 8000+ stars, 符合课程推荐从高关注度项目中选题的建议。使用者只需继承 `Strategy` 基类并实现 `init()` 和 `next()` 两个方法, 框架便会按 K 线顺序逐步提供历史行情数据, 策略只需关注买卖信号的生成逻辑。
 
-选题的时候我在 GitHub 上翻了不少项目, 最后定 Backtesting.py 是因为:
+选题时我在 GitHub 上考察了多个项目, 最终选定 Backtesting.py, 原因是:
 
-1. **规模刚好**: 我纳入注释的 19 个文件加起来一共 5018 行、4248 非空行, 比课程要求的"约 2000 行"高出不少但又不会大到读不完。读源码的过程中我发现这个体量刚刚好 -- 核心引擎逻辑集中在前几百行, 工具模块各司其职, 不会迷失在代码海洋里。
-2. **高级特性密集**: 光是读 `Strategy` 类的定义就看到 `ABCMeta` 元类和 `@abstractmethod`, 往下翻 `_util.py` 里 `_Array` 直接继承 `np.ndarray`, `lib.py` 里 `random_ohlc_data()` 是个无限生成器, `resample_apply()` 用 `inspect.currentframe()` 做调用栈自省。这些不是教材里孤立的示例, 而是为了解决具体工程问题而出现的。
-3. **层次分明**: 核心引擎、策略基类、工具库、统计模块、可视化、测试套件、工程配置 -- 七个层次各司其职, 注释的时候可以一层一层啃, 不会互相干扰。
-4. **能跑起来**: 项目自带三份示例数据 (GOOG 日线、BTCUSD 月线、EURUSD 小时线) 和 76 个测试用例, 搭完环境跑 `run_demo.py` 就能验证, 不用担心"跑不起来"的尴尬。
+1. **规模适中, 适合深入分析**: 纳入注释统计的文件共 19 个, 总计 5018 行、4248 非空行。这一体量既超过了课程要求的"约 2000 行有效代码"标准, 又未大到难以完整通读的程度。阅读过程中可以发现, 核心引擎逻辑集中在 `backtesting.py` 的前半部分, 工具模块按功能划分为独立文件, 代码组织清晰, 不会在大量文件间频繁跳转。
+2. **高级特性密集且服务于实际需求**: `Strategy` 类使用 `ABCMeta` 元类配合 `@abstractmethod` 定义策略接口, 而非简单的继承约定; `_util.py` 中的 `_Array` 直接继承 `np.ndarray`, 并通过重写 `__array_finalize__` 等钩子解决 ndarray 子类化的属性传播问题; `lib.py` 中的 `random_ohlc_data()` 是一个无限生成器, `resample_apply()` 通过 `inspect.currentframe()` 进行调用栈自省以自动检测调用上下文。这些特性不是为了展示语法而存在, 而是为了解决具体的工程设计问题。
+3. **工程结构层次分明**: 项目由核心引擎、策略基类、工具库、统计模块、可视化模块、测试套件和工程配置文件七个层次组成, 各模块职责明确, 文件划分合理。注释时可以按模块顺序推进, 依次理解 `backtesting.py`、`lib.py`、`_util.py`、`_stats.py` 等, 思路连贯, 不会因模块间的耦合而频繁跳转。
+4. **自包含程度高, 可独立运行**: 项目提供了三份示例数据 (GOOG 日线、BTCUSD 月线、EURUSD 小时线) 和 76 个测试用例。无需额外准备数据或编写运行脚本, 搭建环境后执行 `python run_demo.py` 即可获得回测统计结果和可视化输出, 验证成本低, 有利于将精力集中在源码阅读和注释上。
 
 ## 2. 大作业要求对应情况
 
@@ -26,7 +26,7 @@
 
 ### 3.1 环境准备
 
-我使用 conda 创建了一个独立环境, 这样不会和系统里其他项目互相干扰:
+使用 conda 创建独立 Python 环境, 避免与系统中其他项目的依赖产生冲突:
 
 ```bash
 conda create -n backtesting-coursework python=3.11
@@ -35,13 +35,13 @@ conda activate backtesting-coursework
 
 ### 3.2 依赖安装
 
-通过 `requirements.txt` 安装核心依赖 (numpy, pandas, bokeh) 及测试可选依赖 (matplotlib, scikit-learn, sambo, tqdm), 并通过 `constraints.txt` 约束 `pandas<3` 以避开上游兼容性问题:
+通过 `requirements.txt` 安装核心依赖 (numpy, pandas, bokeh) 及 `test` 可选依赖组 (matplotlib, scikit-learn, sambo, tqdm), 并通过 `constraints.txt` 约束 `pandas<3` 以避开上游兼容性问题:
 
 ```bash
 python -m pip install -r requirements.txt -c constraints.txt
 ```
 
-`requirements.txt` 中的 `.[test]` 表示从当前目录安装 backtesting 项目, 并同时安装 `setup.py` 的 `extras_require` 中定义的 `test` 可选依赖组 (matplotlib, scikit-learn, sambo, tqdm 等)。实际运行时核心依赖 (numpy, pandas, bokeh) 在 `setup.py` 的 `install_requires` 中声明。注意这里不是 editable install; 如果需要可编辑安装, 应使用 `pip install -e .[test]`。
+`requirements.txt` 中的 `.[test]` 表示从当前目录安装 backtesting 项目, 并同时安装 `setup.py` 的 `extras_require` 中定义的 `test` 可选依赖组。实际运行时核心依赖 (numpy, pandas, bokeh) 在 `setup.py` 的 `install_requires` 中声明。此处不是 editable install; 可编辑安装需使用 `pip install -e .[test]`。
 
 `constraints.txt` 中仅包含 `pandas<3`, 用于强制安装 pandas 2.x 版本。Backtesting.py 的 `FractionalBacktest` 类在 pandas 3.x 环境下会对只读 NumPy 数组执行原地除法操作 (`indicator /= self._fractional_unit`), 导致 `ValueError: output array is read-only`。约束 pandas 版本后该问题不再出现。
 
@@ -78,13 +78,13 @@ if __name__ == "__main__":
     bt.plot(filename="sma_cross_result.html", open_browser=False)
 ```
 
-该策略使用两条简单移动平均线 (SMA(10) 和 SMA(20)) 的交叉产生交易信号: 快线上穿慢线则做多, 下穿则做空。数据源为 Google (GOOG) 2004 年至 2013 年的日线行情数据。执行 `python run_demo.py` 后, 终端输出约 30 项回测统计指标 (起始/结束时间、收益率、年化收益率、夏普比率、最大回撤、胜率、盈亏因子等), 并在当前目录生成 `sma_cross_result.html` 交互式图表。
+该策略采用两条简单移动平均线 SMA(10) 和 SMA(20): 快线上穿慢线时产生做多信号, 下穿时产生做空信号。数据源为 Google (GOOG) 2004 年至 2013 年的日线行情。执行 `python run_demo.py` 后, 终端输出约 30 项回测统计指标 (起始/结束时间、累计收益率、年化收益率、夏普比率、最大回撤、胜率、盈亏因子等), 并在当前目录生成 `sma_cross_result.html` 交互式图表。
 
 ![运行 run_demo.py 后输出的回测统计结果](report_assets/02_run_demo_stats.png)
 
 ## 4. 工程目录结构与注释范围
 
-我把当前分支 `coursework-annotated` 下的文件分成了四类:
+当前分支 `coursework-annotated` 下的文件按处理方式可分为四类:
 
 ### 第一类: 核心源码 (逐行或关键块注释)
 
@@ -125,61 +125,61 @@ if __name__ == "__main__":
 
 ### 第四类: 保留原貌, 不原地注释
 
-- `README.md` -- 原作者项目说明文档, 包含使用手册、教程链接和 FAQ。修改会破坏原始语义。
-- `LICENSE.md` -- AGPL-3.0 开源协议文本。开源协议内容不应被修改。
-- `backtesting/test/GOOG.csv`, `BTCUSD.csv`, `EURUSD.csv` -- 示例行情数据文件, 由 pandas 通过 `read_csv` 读取。在其中插入中文注释会破坏 CSV 格式, 导致数据加载失败。
+- `README.md` -- 原作者项目说明文档, 包含使用手册、教程链接和 FAQ。在其内部插入注释会破坏文档的原始语义和阅读体验。
+- `LICENSE.md` -- AGPL-3.0 开源协议文本。开源协议属于法律文本, 不应被修改。
+- `backtesting/test/GOOG.csv`, `BTCUSD.csv`, `EURUSD.csv` -- 示例行情数据文件, 由 pandas 通过 `read_csv` 读取。在其中插入任何非 CSV 格式的文本都会导致解析失败, 影响 `run_demo.py` 和测试套件的正常运行。
 
 ## 5. 核心回测流程分析
 
-这是我在注释过程中花时间最多、也收获最大的部分。Backtesting.py 的回测流程体现了典型的事件驱动架构, 整个流程由 `Backtest.run()` 统一编排。我把它分成初始化、主循环、统计结算三个阶段来理解。
+这是注释过程中耗时最多、收获也最大的部分。Backtesting.py 的回测流程体现了典型的事件驱动架构, 由 `Backtest.run()` 统一编排, 可按初始化、主循环、统计结算三个阶段来理解。
 
 ### 5.1 初始化阶段
 
-用户首先创建 `Backtest` 实例, 传入行情数据 DataFrame、策略类 (非实例)、初始资金、佣金率、保证金比例、交易模式等参数。`Backtest.__init__` 对输入数据进行严格校验: 检查 OHLCV 列完整性、NaN 值、时间索引有序性, 并将非 DatetimeIndex 的数值索引智能转换为时间索引。
+用户首先创建 `Backtest` 实例, 传入行情数据 DataFrame、策略类 (而非策略实例)、初始资金、佣金率、保证金比例和交易模式等参数。`Backtest.__init__` 对输入数据进行一系列校验: OHLCV 列的完整性和值合法性、时间索引的有序性, 并尝试将 Unix 时间戳等数值索引智能转换为 `DatetimeIndex`。
 
-然后用户调用 `bt.run(**params)`, 这里的 `params` 会被传递给策略构造函数。`run()` 内部依次执行:
+调用 `bt.run(**params)` 时, `params` 被传递给策略构造函数。`run()` 内部依次执行:
 
 1. 创建 `_Data` 实例包裹 DataFrame, 将每列转换为 `_Array` (NumPy ndarray 子类), 缓存完整数组并支持动态长度控制。
-2. 通过 `functools.partial` 延迟创建的 `_Broker` 实例化, 注入 cash、spread、commission、margin 等交易参数。
+2. 通过 `functools.partial` 延迟创建的 `_Broker` 实例化, 注入交易参数。
 3. 以 broker 和 data 为参数实例化策略对象, 调用 `strategy.init()`。
 
-在 `strategy.init()` 中, 用户通过 `self.I(func, data, *args)` 预计算技术指标。`I()` 方法的核心工作包括: 自动生成指标名称、执行指标函数、将结果包装为 `_Indicator` (标记子类)、根据指标值与 Close 的接近程度判断 overlay 属性 (叠加在 K 线图上还是显示在独立子图)、将指标添加到 `self._indicators` 列表。`init()` 阶段可以访问完整的历史数据, 所有指标一次性向量化计算完毕。
+在 `strategy.init()` 中, 用户通过 `self.I(func, data, *args)` 预计算全部技术指标。`I()` 方法的核心工作包括: 自动生成指标名称、执行指标函数、将结果包装为 `_Indicator` (标记子类, 用于区分指标和普通变量)、根据指标值与 Close 的接近程度判断 overlay 属性 (叠加在 K 线图上还是显示在独立子图)、将指标注册到 `self._indicators` 列表。`init()` 阶段可以访问完整的历史数据, 所有指标通过一次向量化计算得出, 无需在主循环中逐 bar 重算。
 
 ### 5.2 主循环阶段
 
 主循环从 `start` (指标预热期结束位置) 开始, 逐根 K 线推进, 共 `len(data) - start` 个周期。每个周期执行三个操作:
 
-**Step 1: 数据揭示**。调用 `data._set_length(i + 1)` 将数据访问器的可见长度设置为当前 K 线位置。后续所有对 `self.data.Close` 等属性的访问只能读取到 `[:i+1]` 范围的数据, 模拟实时行情逐步揭示的过程, 避免未来信息泄露。同时将每个指标的切片更新到策略实例的对应属性上。
+**Step 1: 数据揭示。** 调用 `data._set_length(i + 1)` 将数据访问器的可见长度设置为当前位置。此后对 `self.data.Close` 等属性的访问只能读取到 `[:i+1]` 范围的数据, 模拟实时行情逐步揭示的过程, 从根本上杜绝 future peek 偏差。同时将每个指标的切片更新到策略实例的对应属性上。
 
-**Step 2: 订单撮合**。调用 `broker.next()`, 内部执行 `_process_orders()`。这是整个引擎中最复杂的逻辑。订单队列按以下优先级处理:
+**Step 2: 订单撮合。** 调用 `broker.next()`, 内部执行 `_process_orders()`。这是整个引擎中逻辑最密集的方法, 按以下优先级处理订单队列:
 
-- **止损检查**: 对于设置了 `stop` 价格的订单, 检查当前 K 线的高低点是否触及止损价。触及后 `stop` 被清除, 订单转为市价或限价单。
-- **限价检查**: 对于设置了 `limit` 的订单, 检查价格是否到达限价范围内。悲观假设 (限价在止损之前触及) 导致某些订单被推迟到下一周期。
+- **止损触发检查**: 对于设置了 `stop` 价格的订单, 判断当前 K 线的高低点是否触及止损价。触及后 `stop` 被清除, 订单转为市价或限价单继续处理。
+- **限价可达性检查**: 对于设置了 `limit` 的订单, 判断价格是否进入限价范围。框架采用悲观假设 -- 如果限价和止损在同一 K 线内均可触发, 假定限价在止损之前触及, 订单被推迟到下一周期, 以避免对策略不利的成交价。
 - **成交价确定**: 限价单取限价与 stop/open 之间的最优值; 市价单取开盘价 (或 `trade_on_close=True` 时的前收盘价)。
-- **contingent 订单处理**: SL/TP 订单关联到父交易。当价格触及 SL/TP 时, 通过 `_reduce_trade` 或 `_close_trade` 平掉对应仓位。
-- **对冲/非对冲模式**: 非对冲模式下, 新订单会 FIFO 平掉反向的现有仓位 (`_reduce_trade` / `_close_trade`)。对冲模式下允许同时持有双向仓位。
-- **保证金检查**: 计算可用保证金是否足够开仓。不足时取消订单并发出警告。
-- **开仓**: 调用 `_open_trade` 创建 `Trade` 实例, 扣除佣金, 设置 SL/TP 订单。
+- **contingent 订单处理 (SL/TP)**: SL/TP 订单关联到父交易。价格触及 SL/TP 时, 通过 `_reduce_trade()` 或 `_close_trade()` 平掉对应仓位。新产生的 SL/TP 订单可能在同一 K 线内触发, 框架递归调用 `_process_orders()` 处理这种情形。
+- **对冲/非对冲模式**: 非对冲模式下, 新订单以 FIFO 方式先平掉反向的现有仓位; 对冲模式下允许同时持有双向仓位。
+- **保证金检查**: 计算可用保证金是否足以开仓。不足时取消订单并发出警告。
+- **开仓**: 调用 `_open_trade()` 创建 `Trade` 实例, 扣除进场佣金, 并在需要时创建 SL/TP 条件订单。
 
-撮合完成后记录当前权益值到 `_equity` 数组。如果权益 <= 0, 则触发 `_OutOfMoneyError`, 清空所有仓位并终止回测。
+撮合完成后, 当前权益值被记录到 `_equity` 数组。如果权益 <= 0, 触发 `_OutOfMoneyError` 异常, 清空所有仓位并终止回测。
 
-**Step 3: 策略决策**。调用 `strategy.next()`。用户在此根据当前指标值 (如 `self.ma1[-1]` 取最新值, `self.ma1[-2]` 取前一根值) 调用 `buy()` 或 `sell()` 创建订单。这些订单在**下一个** K 线周期的 Step 2 中才会被处理。
+**Step 3: 策略决策。** 调用 `strategy.next()`。用户在此根据当前指标值 (如 `self.ma1[-1]` 取最新值, `self.ma1[-2]` 取前一根值) 调用 `buy()` 或 `sell()` 创建订单。需要注意, 这些订单在当前周期不会被处理, 而是在**下一个** K 线周期的 Step 2 中才进入撮合队列, 这一设计同样是为了避免使用当前 K 线尚未确认的价格信息。
 
 ### 5.3 统计结算阶段
 
-主循环结束后, 如果设置了 `finalize_trades=True`, 则平掉所有未平仓交易; 否则发出警告。随后 `compute_stats()` 基于权益数组和已平仓交易列表计算约 30 项统计指标, 包括: 收益率、年化收益率、波动率、夏普比率、索提诺比率、卡尔玛比率、最大回撤及持续期、胜率、盈亏因子、SQN、凯利准则等。结果以 `_Stats` (pd.Series 子类) 形式返回。
+主循环结束后, 若设置了 `finalize_trades=True`, 框架会平掉所有未平仓交易; 否则发出警告, 提醒用户部分交易在回测结束时仍处于活跃状态。随后 `compute_stats()` 基于权益数组和已平仓交易列表计算约 30 项统计指标, 涵盖收益、风险、回撤和交易表现四个维度。结果以 `_Stats(pd.Series 子类)` 形式返回, 该子类仅重写了 `__repr__` 方法以优化终端打印格式。
 
 ### 5.4 参数优化流程
 
-`Backtest.optimize()` 支持两种优化方法: 网格搜索 (`method='grid'`) 和 SAMBO 贝叶斯优化 (`method='sambo'`)。网格搜索枚举参数的笛卡尔积, 通过多进程池 (`backtesting.Pool`) 并行运行各参数组合的回测。数据通过 `SharedMemoryManager` 写入共享内存传递给子进程, 避免 pickle 大数据集, 提升效率。结果以 MultiIndex Series 形式返回, 可通过 `plot_heatmaps()` 可视化为热力图。
+`Backtest.optimize()` 支持两种优化方法: 网格搜索 (`method='grid'`) 和 SAMBO 贝叶斯优化 (`method='sambo'`)。网格搜索枚举参数的笛卡尔积, 通过多进程池 (`backtesting.Pool`) 并行运行各参数组合的回测。数据通过 `SharedMemoryManager` 写入共享内存传递给子进程, 避免逐一 pickle 完整 DataFrame, 显著减少了进程间通信开销。优化结果以 MultiIndex Series 形式返回, 可通过 `plot_heatmaps()` 可视化为热力图。
 
 ## 6. Python 高级特性分析
 
-Backtesting.py 在多处运用了 Python 高级特性, 这些特性不是孤立存在的语法糖, 而是服务于工程设计的核心机制。
+Backtesting.py 中 Python 高级特性的使用并非孤立的语法展示, 而是与工程设计需求紧密耦合。以下逐一分析各特性在工程中的具体应用、解决的问题及其在回测流程中的位置。
 
 ### 6.1 ABCMeta 元类与 @abstractmethod
 
-`Strategy` 类的定义使用了 `metaclass=ABCMeta`:
+`Strategy` 类通过 `metaclass=ABCMeta` 配合两个 `@abstractmethod` 定义策略接口:
 
 ```python
 class Strategy(metaclass=ABCMeta):
@@ -190,39 +190,41 @@ class Strategy(metaclass=ABCMeta):
     def next(self): ...
 ```
 
-`ABCMeta` 是 Python 标准库 `abc` 模块提供的元类。当一个类以 `ABCMeta` 为元类时, 如果子类没有实现所有被 `@abstractmethod` 标记的方法, 在实例化时 Python 解释器会抛出 `TypeError`, 阻止创建不完整的对象。这比在基类方法中 `raise NotImplementedError` 更加严格, 因为错误在实例化阶段而非方法调用阶段就被捕获。
+`ABCMeta` 是 Python 标准库 `abc` 模块提供的元类。其关键行为在于: 如果子类未实现所有被 `@abstractmethod` 标记的方法, **在实例化阶段** (而非方法调用阶段) 就会抛出 `TypeError`。相比在基类方法体中写 `raise NotImplementedError`, 这种方式将错误发现时间点提前到了对象创建时刻, 对用户更加友好 -- 无需等到回测运行至中途才发现策略类写得不完整。
 
-`Strategy` 通过 ABstraact Meta 强制用户实现 `init()` 和 `next()` 两个方法, 定义了策略与框架之间的接口契约。任何继承 `Strategy` 的子类都必须遵守这一契约, 否则无法运行。这种设计是模板方法模式的基础 -- 框架定义了算法骨架 (`Backtest.run()` 中的主循环流程), 但将具体步骤 (`init()` 和 `next()`) 延迟到子类实现。
+从设计角度看, `ABCMeta` 在这里实现的是一种接口契约: 任何继承 `Strategy` 的子类必须提供 `init()` 和 `next()` 两个方法, 否则根本无法创建实例。这是模板方法模式得以成立的前提 -- 框架的 `Backtest.run()` 依赖这两个方法的存在, 元类保证了这个前提不会被违反。
 
 ### 6.2 模板方法模式
 
-`Backtest.run()` 是模板方法模式的枢纽。它控制着回测的整体流程 -- 数据准备、指标预热、主循环推进、统计结算 -- 但将交易决策的逻辑完全交给用户定义的 `Strategy.init()` 和 `Strategy.next()`。框架不关心用户使用什么指标、做出什么交易决策, 只负责按约定顺序调用这些方法, 并在每次调用前准备好正确的上下文 (逐步揭示的数据、更新后的指标值)。
+`Backtest.run()` 是模板方法模式的集中体现。它定义了回测的算法骨架 (数据准备、指标预热、主循环推进、统计结算), 但将其中两个关键步骤 -- 初始化阶段的指标计算和主循环中的交易决策 -- 推迟到 `Strategy.init()` 和 `Strategy.next()` 两个子类方法中实现。框架不关心用户使用何种指标或做出何种交易判断, 只负责在正确的时机、以正确的上下文调用这两个方法。
 
-这种设计使得框架核心与策略逻辑松耦合。用户可以完全专注于策略本身, 而无需修改回测引擎的代码。这是面向对象设计中"开闭原则"的体现: 对扩展开放 (继承 Strategy 写新策略), 对修改关闭 (不需要改动 Backtest 和 _Broker)。
+这种设计将框架核心与策略逻辑解耦。用户编写策略时只需关注"用什么指标"和"何时买卖", 无需接触 Broker 的状态管理或订单撮合细节。这体现了面向对象设计中的开闭原则: 对扩展开放 (通过继承 Strategy 创建新策略), 对修改关闭 (不需要改动 `Backtest` 或 `_Broker` 的任何代码)。
 
 ### 6.3 @property 属性封装
 
-框架大量使用 `@property` 装饰器将方法伪装为属性访问, 提供简洁直观的 API:
+`@property` 在框架中被广泛使用, 其目的不是简单的 getter/setter 语法糖, 而是构建一种符合直觉的 API 表面:
 
-- `Strategy.position` / `Strategy.trades` / `Strategy.equity` -- 将内部 broker 状态以只读属性的形式暴露给用户, 隐藏了 `self._broker` 的实现细节。
-- `Trade.sl` / `Trade.tp` 同时定义了 getter 和 setter: getter 返回关联订单的止损/止盈价格, setter 负责取消旧订单、创建新订单。这种封装使得修改止损价的操作只需 `trade.sl = 100`, 而无需了解底层订单管理逻辑。
-- `_Data.Close` / `_Data.Open` 等 OHLCV 属性通过 `@property` 返回缓存的 `_Array` 切片视图, 将 DataFrame 的列访问转换为 ndarray 访问, 在提升性能的同时保持了 `data.Close` 的自然语法。
+- `Strategy.position`, `Strategy.trades`, `Strategy.equity` 等属性将内部 `_broker` 的状态以只读属性的形式暴露。用户写 `self.position.is_long` 而不是 `self._broker.position.is_long()`, 后者暴露了不必要的实现细节。
+- `Trade.sl` 和 `Trade.tp` 同时定义了 getter 和 setter。getter 从关联的 SL/TP 订单对象中提取价格; setter 在赋新值时先取消旧的条件订单, 再通过 Broker 创建新订单。这一封装使得修改止损只需 `trade.sl = 100`, 背后的订单生命周期管理对用户透明。
+- `_Data.Close`, `_Data.Open` 等属性通过 `@property` 从内部缓存返回 `_Array` 切片。它们在语法上等同于 `data['Close']`, 但避免了每次访问都走 `__getattr__` 中的字典查找路径, 同时保留了 `data.Close` 这种 pandas 用户熟悉的访问方式。
 
 ### 6.4 NumPy ndarray 子类化
 
-`_Array` 继承自 `np.ndarray`, 是框架中最核心的内部数据结构。ndarray 子类化的难点在于: NumPy 创建新数组的操作 (切片、reshape、ufunc 等) 默认返回普通 ndarray, 会丢失子类的自定义属性。
+`_Array(np.ndarray)` 是框架中流转的核心数据结构, 也是 Python 高级特性在性能优化场景中的典型应用。
 
-`_Array` 通过以下机制解决这一难题:
+ndarray 子类化的核心难点在于: NumPy 创建新数组的操作 (切片、reshape、ufunc 等) 默认返回普通 ndarray, 会丢弃子类的自定义属性。`_Array` 通过以下机制应对:
 
-- `__new__` 而非 `__init__`: 因为 ndarray 是不可变对象, 构造逻辑必须在 `__new__` (对象分配阶段) 完成。`.view(cls)` 将已有数组的类型转换为 `_Array`, 避免数据拷贝。
-- `__array_finalize__`: 当 NumPy 从已有数组创建新数组时自动调用这个方法, 负责将源对象的 `.name` 和 `._opts` 属性传播到新对象。这确保了指标经过任何 NumPy 运算后仍保留元数据。
-- `__reduce__` / `__setstate__`: 重写 pickle 序列化协议, 在多进程优化中通过共享内存传递指标数据时保持自定义属性的完整性。
+- **`__new__` 而非 `__init__`**: ndarray 是不可变对象, 其构造逻辑必须在对象分配阶段的 `__new__` 中完成。`.view(cls)` 将已有 ndarray 的类型转换为 `_Array` 而不复制数据。
+- **`__array_finalize__`**: 这是 NumPy 子类化协议的关键钩子。每当 NumPy 从已有数组创建新数组时, 这个方法被自动调用, 负责将源对象的 `.name` 和 `._opts` (绘图参数、时间索引等元数据) 传播到新对象。这意味着指标数组经过任何 NumPy 运算后仍保留标识信息和绘图配置。
+- **`__reduce__` / `__setstate__`**: 重写 pickle 序列化协议, 确保多进程优化中通过共享内存传递指标数据时自定义属性不会丢失。
 
-`_Indicator` 是 `_Array` 的空子类, 仅用于 `isinstance` 类型区分。这允许 `_strategy_indicators()` 函数从策略实例的 `__dict__` 中筛选出指标属性而非普通 Python 变量。
+`_Indicator` 是 `_Array` 的空子类, 仅用于类型标记。`_strategy_indicators()` 函数通过 `isinstance(indicator, _Indicator)` 从策略实例的 `__dict__` 中筛选指标属性, 排除普通 Python 变量。
+
+这一设计的工程意义在于: 回测主循环是性能敏感的热路径, 使用 ndarray 而非 pandas Series 可以避免每次访问都经过 pandas 的索引对齐和类型推断开销; 但纯 ndarray 又缺少名称、颜色、overlay 等上层功能所需的元数据。`_Array` 以子类化的方式在这两者之间找到了平衡点。
 
 ### 6.5 __getattr__ 动态属性代理
 
-`_Data` 类通过 `__getattr__` 实现了动态的属性访问机制:
+`_Data` 类通过 `__getattr__` 实现了动态列访问:
 
 ```python
 def __getattr__(self, item):
@@ -232,136 +234,89 @@ def __getattr__(self, item):
         raise AttributeError(...)
 ```
 
-当用户访问 `self.data.Close` 时, Python 首先在实例的 `__dict__` 中查找 `Close` 属性。由于 `_Data` 没有显式定义名为 `Close` 的实例变量, 属性查找回退到 `__getattr__`。`__getattr__` 将属性名转发给 `__get_array('Close')`, 从内部缓存的 `_Array` 字典中取出对应列的切片视图。
+当用户访问 `self.data.Close` 时, Python 先在实例的 `__dict__` 中查找 `Close`, 失败后回退到 `__getattr__`, 后者将属性名转发给 `__get_array('Close')`, 从缓存中取出对应列的 `_Array` 切片视图。`__getitem__` 同时提供了 `data['Close']` 的字典式语法。
 
-这种代理模式的优势在于: `_Data` 不需要预先枚举所有可能的列名, 用户可以传入任意列名的 DataFrame (如额外的 `P/E`、`MCap` 等), 框架自动代理这些列的访问。同时, `__getitem__` 也提供了 `data['Close']` 的字典式访问语法。
+这一代理模式的实际价值在于: `_Data` 无需预先声明所有列名, 用户可以传入包含任意额外列的 DataFrame (如 P/E、市值等自定义因子), 框架自动代理这些列的访问, 无需修改 `_Data` 的源码。
 
 ### 6.6 上下文管理器
 
-工程中使用了两种上下文管理器:
+工程使用了两种形式的上下文管理器:
 
-**@contextmanager 装饰的 patch()**: 将生成器函数转换为上下文管理器。`patch(obj, attr, newvalue)` 在进入 `with` 块时设置 `obj.attr = newvalue`, 退出时恢复原值或删除临时添加的属性。典型应用场景是 `FractionalBacktest.run()` 中临时用缩放后的数据替换原始 `self._data`, 以及在 SharedMemory 构造函数中临时禁用资源追踪注册。
+**@contextmanager 装饰的 `patch()`**: 利用生成器函数的 `yield` 暂停语义, `yield` 之前的代码在 `with` 进入时执行, `finally` 块中的代码在退出时执行 (无论是否发生异常)。`patch(obj, attr, newvalue)` 在 `with` 块内临时替换对象属性, 退出时自动恢复。典型应用包括 `FractionalBacktest.run()` 中临时用缩放后的数据替换 `self._data`, 以及 SharedMemory 构造函数中临时禁用资源追踪注册。
 
-**SharedMemoryManager**: 实现了标准的 `__enter__` / `__exit__` 协议。进入时返回自身, 退出时遍历所有创建的共享内存块并依次 `close()` 和 `unlink()`。这确保了即便在异常发生时, 共享内存也能被正确释放, 避免系统资源泄漏。
+**`SharedMemoryManager`**: 实现标准的 `__enter__`/`__exit__` 协议。`__enter__` 返回管理器自身, `__exit__` 遍历所有已创建的共享内存块并依次执行 `close()` 和 `unlink()`。即使 `with` 块内部抛出异常, `__exit__` 仍会被调用, 保证系统级资源不会泄漏。在多进程参数优化场景中, 这一机制是保证子进程结束后共享内存被正确回收的关键。
 
 ### 6.7 生成器
 
-`random_ohlc_data()` 使用 `yield` 实现了无限生成器, 每次迭代返回一组具有与原始数据相似统计特征的随机 OHLC 数据。生成器内部通过 `while True` 循环 + 有放回抽样 + 价格偏移量累积实现, 每次 `next()` 返回新的 DataFrame。这种设计使得蒙特卡洛模拟和策略压力测试可以按需生成数据, 而无需一次性生成大量数据占用内存。
+`random_ohlc_data()` 使用 `yield` 实现了一个无限生成器, 每次迭代通过有放回抽样和价格偏移量累积生成一组具有与参考数据相似统计特征的随机 OHLC 行情。`while True` 循环确保调用方可以按需获取任意数量的数据, 而不必一次性分配大量内存。这种按需生成的方式适用于蒙特卡洛模拟和策略压力测试 -- 生成器在每次 `next()` 调用时才计算新的数据集, 内存占用恒定。
 
 ### 6.8 多进程与共享内存
 
-`Backtest.optimize()` 在网格搜索模式下使用多进程池并行运行各参数组合的回测。`SharedMemoryManager` 将 DataFrame 序列化到共享内存区域, 子进程从共享内存读取数据而无需通过 pickle 传递大 DataFrame。`SharedMemoryManager.arr2shm()` 将一维数组写入共享内存, `shm2df()` 从共享内存恢复为完整 DataFrame。对于含时区信息的 datetime 列, 会先做 `tz_localize(None)` 转换, 因为 NumPy 不直接支持 tz-aware 类型。
+`Backtest.optimize()` 的网格搜索通过 `backtesting.Pool` (可被用户替换的进程池) 并行执行各参数组合的回测。为避免通过 pickle 将大型 DataFrame 重复传递给每个子进程, `SharedMemoryManager` 将 DataFrame 的每一列通过 `arr2shm()` 写入 System V 共享内存, 子进程通过 `shm2df()` 从共享内存直接恢复数据。对于含时区信息的 datetime 列, 会先做 `tz_localize(None)` 转换再写入, 因为 NumPy 的共享内存缓冲区不直接支持 tz-aware dtype。
 
-此外, Python 3.13 修改了 SharedMemory 的 API (`track` 参数), 工程通过 `sys.version_info` 版本分支处理了 Python 3.9-3.12 与 3.13+ 的兼容性差异。
+此外, Python 3.13 修改了 `SharedMemory` 的 `track` 参数接口。工程通过 `sys.version_info` 进行版本分支, 在 3.9-3.12 版本中使用自定义的 `SharedMemory` 子类通过线程锁和 `patch()` 临时禁用资源追踪, 在 3.13+ 版本中直接使用标准库提供的接口。这种跨版本兼容处理在实际工程中很常见, 也是阅读源码时的一个收获。
 
-### 6.9 函数式工具
+### 6.9 函数式工具与运行时自省
 
-`lib.py` 中的 `crossover()`、`cross()`、`barssince()` 等函数提供了简洁的函数式信号表达。`crossover()` 支持 ndarray、pd.Series 和常数三种输入类型, 内部统一转换为数组后通过相邻元素比较判断上穿。`resample_apply()` 使用 `inspect.currentframe()` 进行调用栈自省, 向上遍历最多 3 帧来检测是否在 `Strategy.init()` 内部被调用, 从而决定是否自动通过 `self.I()` 注册指标。这是 Python 运行时自省 (introspection) 能力的典型应用。
+`lib.py` 中的 `crossover()`, `cross()`, `barssince()` 等函数以简洁的函数式风格提供了策略中最常用的信号判断。`crossover()` 统一处理 ndarray, pd.Series 和常数三种输入类型, 内部转换为数组后进行相邻元素比较。
+
+`resample_apply()` 展示了 Python 运行时自省 (introspection) 的能力。它通过 `inspect.currentframe()` 获取当前执行帧, 然后向上遍历调用栈 (最多 3 层), 检测调用者的 `self` 是否为 `Strategy` 实例。如果发现是从 `Strategy.init()` 内部调用, 则自动通过 `self.I()` 注册指标; 否则直接将结果作为普通数组返回。这种上下文感知行为使用户在多时间框架指标场景下无需手动调用 `self.I()`, 减少了样板代码。
 
 ## 7. 关键模块源码剖析
 
 ### 7.1 backtesting/backtesting.py -- 核心回测引擎
 
-这是整个工程中最核心的模块。文件包含约 1292 行代码, 定义了 7 个核心类和一个异常类:
+这是整个工程中最重要的模块, 约 1292 行, 定义了 7 个核心类和 1 个自定义异常:
 
-**Strategy (策略基类)**: 使用 `ABCMeta` 元类和两个 `@abstractmethod` (`init`, `next`) 定义策略接口。`I()` 方法提供指标注册机制, 负责名称格式化、数组形状验证、overlay 启发式判定、`_Indicator` 包装和自动注册。`buy()` 和 `sell()` 方法将订单创建委托给 `_Broker.new_order()`。通过 `@property` 暴露 `position`、`trades`、`equity`、`data` 等状态访问器。
+**Strategy (策略基类)**: 通过 `ABCMeta` 元类定义策略接口契约。`I()` 方法是用户在 `init()` 中声明指标的唯一入口, 集成了名称格式化, 数组形状验证, overlay 启发式判定, `_Indicator` 包装和自动注册等多项职责。`buy()` 和 `sell()` 方法将订单创建委托给 `_Broker.new_order()`, 并在 `size` 参数上支持权益比例 (0~1) 和绝对数量 (>=1) 两种语义。
 
-**Order (订单)**: 封装了一笔交易指令的全部信息 (size、limit、stop、sl、tp、tag)。支持市价单、限价单、止损单和止损限价单四种类型。`is_contingent` 属性判断是否为关联到已有交易的 SL/TP 条件单。属性使用双下划线前缀 (`__size` 等), 通过 Python 的 name mangling 机制防止子类属性冲突。
+**Order (订单)**: 封装交易指令的完整信息。支持市价单 (limit=None, stop=None), 限价单, 止损单和止损限价单四种类型。`is_contingent` 属性用于区分独立订单和关联到已有交易的 OCO 条件单 (SL/TP)。订单状态通过 `_replace()` 方法可变地更新, 方法名以下划线开头暗示其为框架内部使用。
 
-**Trade (交易)**: 订单成交后产生的交易记录。跟踪进场价格、出场价格、进出场 K 线编号、关联的 SL/TP 订单、累计佣金和用户标签。`pl` 和 `pl_pct` 属性实时计算浮动盈亏。`sl` 和 `tp` 属性使用 `@setter` 实现可读写接口, 底层通过 `__set_contingent()` 管理关联条件订单的生命周期。
+**Trade (交易)**: 订单成交后产生的交易对象, 持续跟踪从进场到出场的全部信息。`pl` 属性根据是否已平仓选择使用出场价或当前价格计算浮动盈亏。`sl` 和 `tp` 通过 `@setter` 实现可读写属性, 底层调用 `__set_contingent()` 管理条件订单的完整生命周期。
 
-**_Broker (内部撮合引擎)**: 这是回测引擎的心脏。维护订单队列 (`orders`)、活跃交易列表 (`trades`)、已平仓交易历史 (`closed_trades`) 和权益曲线数组 (`_equity`)。`_process_orders()` 方法实现了完整的订单撮合逻辑, 核心难点在于: 止损触发后的订单类型转换、限价与止损在同一 K 线内的悲观假设、contingent 订单的关联平仓、非对冲模式下的 FIFO 反向仓位关闭、比例仓位 (`-1 < size < 1`) 到实际股数的转换、保证金不足时的订单取消。`_reduce_trade()` 支持部分平仓, 通过 `_copy()` 创建原交易的缩减副本。`_close_trade()` 处理完全平仓, 并在进场和出场各扣一次佣金。
+**_Broker (内部撮合引擎)**: 维护订单队列, 活跃交易列表, 已平仓交易历史和权益曲线数组。`_process_orders()` 是全工程逻辑最密集的方法 (约 170 行), 覆盖了止损触发, 限价检查, 成交价确定, contingent 订单处理, 非对冲 FIFO 平仓, 保证金检查和开仓等全部撮合步骤。`_reduce_trade()` 通过 `_copy()` 创建原交易的缩减副本实现部分平仓, 避免修改原始交易对象的状态。
 
-**Backtest (回测引擎入口)**: `__init__` 对输入数据进行严格校验, 并将 `_Broker` 的构造函数包装为 `functools.partial` 以支持多次 `run()` 调用。`run()` 编排完整的回测流程 (见第 5 节)。`optimize()` 支持网格搜索和 SAMBO 贝叶斯优化, 使用 `_mp_task` 静态方法在多进程中并行执行回测。`plot()` 将可视化委托给 `_plotting.plot()`。
+**Backtest (用户入口)**: `__init__` 对输入数据执行严格校验并通过 `functools.partial` 延迟 Broker 构造, 以支持多次 `run()` 调用各自创建独立的 Broker 实例。`run()` 编排完整回测流程; `optimize()` 通过 `_mp_task` 静态方法在多进程中并行执行; `plot()` 将可视化委托给 `_plotting.plot()`。
 
 ### 7.2 backtesting/lib.py -- 策略辅助函数库
 
-`lib.py` 提供了用户策略开发中最常用的工具函数和可组合策略基类。
+`lib.py` 将策略开发中的常见模式封装为可复用的函数和基类, 减少用户重复编码。
 
-`crossover()` 和 `cross()` 是最基础的信号函数, 前者判断上穿, 后者判断任意方向交叉。`resample_apply()` 解决了多时间框架指标计算的难题: 先将数据重采样到目标频率, 对聚合后的数据应用指标函数, 再将结果映射回原始时间索引 (使用 `ffill` 前向填充避免 look-ahead bias)。它的独特之处在于通过 `inspect.currentframe()` 检测调用栈, 自动判断是否在 `Strategy.init()` 内被调用, 从而决定是否通过 `self.I()` 注册指标。
+`crossover()` 和 `cross()` 是最基础的信号函数, 前者判断上穿, 后者判断任意方向的交叉。`resample_apply()` 解决了多时间框架指标计算问题: 先按目标频率重采样, 对聚合数据应用指标函数, 再通过前向填充将结果映射回原始时间索引, 整个过程避免了 look-ahead bias。其调用栈自省机制使得在 `Strategy.init()` 内调用时自动注册指标, 无需用户额外处理。
 
-`SignalStrategy` 将回测从"逐 K 线判断"简化为"预设信号向量", 用户只需在 `init()` 中设置进场/出场信号数组, `next()` 自动处理订单。`TrailingStrategy` 提供基于 ATR 的自动跟踪止损, 止损价单向移动 (多头只升不降, 空头只降不升)。`FractionalBacktest` 通过价格/成交量的缩放变换实现分数股交易支持。`MultiBacktest` 支持同一策略在多个品种上并行运行, 并汇总结果。
+`SignalStrategy` 将基于信号向量的回测模式化为基类, 用户只需在 `init()` 中调用 `set_signal()` 设置进场/出场信号数组。`TrailingStrategy` 提供基于 ATR (平均真实波幅) 的跟踪止损, 止损价严格单向移动 (多头只升不降, 空头只降不升), 避免止损被意外收紧。`FractionalBacktest` 通过对价格和成交量的缩放变换, 在不修改核心引擎的前提下实现了分数股交易支持, 这是一种典型的适配器模式应用。`MultiBacktest` 将同一策略在多个品种上的并行回测封装为简洁的 API, 内部通过共享内存传递数据。
 
-`random_ohlc_data()` 是一个无限生成器, 通过随机抽样和价格偏移量累积生成具有与示例数据相似统计特征的 OHLC 行情, 可用于策略的蒙特卡洛模拟和压力测试。
+`random_ohlc_data()` 是一个无限生成器, 通过有放回抽样和价格偏移累积生成统计特征与原始数据相似的随机行情, 可用于蒙特卡洛模拟。
 
 ### 7.3 backtesting/_util.py -- 内部工具与数据结构
 
-`_util.py` 是工程的基础设施层, 提供了被其他模块广泛使用的工具函数和核心数据结构。
+`_util.py` 是整个框架的基础设施层。`_Array(np.ndarray)` 通过 ndarray 子类化在保持 NumPy 计算性能的前提下携带名称, 绘图参数和时间索引等元数据, 其 `__array_finalize__`, `__reduce__` 和 `__setstate__` 方法构成了完整的子类化生命周期管理。`_Data` 通过 `__getattr__` 代理和两级缓存 (完整数组 + 当前切片) 实现了高性能的 OHLCV 数据访问, `_set_length()` 在主循环中动态控制数据可见范围。
 
-`_Array(np.ndarray)` 是框架中最关键的数据结构。它继承 NumPy 的 ndarray, 但额外携带 `.name` 和 `._opts` 两个属性, 使得指标数组兼具 ndarray 的计算性能和 pandas 式的元数据追踪能力。`__array_finalize__` 确保 NumPy 运算 (切片/reshape/ufunc) 后自定义属性不丢失, 这是 NumPy 子类化协议的核心。`__reduce__` 和 `__setstate__` 支持 pickle 序列化, 满足多进程优化的需求。`__bool__` 和 `__float__` 使得 `if self.ma1:` 和 `float(self.ma1)` 能直接取最新值。
-
-`_Data` 是 OHLCV 数据的访问器, 通过 `__getattr__` 实现动态列访问代理。它维护两种缓存: 完整长度的数组缓存 (`__arrays`) 和当前可见长度的切片缓存 (`__cache`)。回测主循环每推进一根 K 线, 就通过 `_set_length(i+1)` 更新可见长度并清缓存, 确保下次访问拿到正确长度的切片。返回的切片是视图而非拷贝, 内存效率高。
-
-`SharedMemoryManager` 是上下文管理器, 用于多进程优化时共享数据。它将 DataFrame 的每一列通过 `arr2shm()` 写入 System V 共享内存区域, 子进程通过 `shm2df()` 从共享内存恢复数据。相比 pickle 序列化, 共享内存避免了大数据集的重复拷贝。
+`SharedMemoryManager` 以上下文管理器的方式封装了 System V 共享内存的创建, 数据序列化, 子进程恢复和资源回收逻辑, 是多进程参数优化的基础设施。
 
 ### 7.4 backtesting/_stats.py -- 统计指标计算
 
-`compute_stats()` 接收交易列表、权益数组、OHLC 数据和策略实例, 输出包含约 30 项指标的 `pd.Series`。指标覆盖四个维度:
-
-- **基础信息**: Start, End, Duration, Exposure Time。
-- **收益指标**: Return, Buy & Hold Return, Return (Ann.), CAGR。年化收益率采用几何平均日收益的复利公式, 年化波动率使用复合收益方差公式。
-- **风险指标**: Sharpe Ratio (年化超额收益/年化波动率), Sortino Ratio (仅用下行波动率), Calmar Ratio (年化收益/最大回撤), Max Drawdown, Avg Drawdown, Max Drawdown Duration。回撤持续期和幅度通过 `compute_drawdown_duration_peaks()` 计算, 该函数定位回撤为 0 的基准点, 将序列切分为回撤区间。
-- **交易表现**: # Trades, Win Rate, Best/Worst Trade, Avg Trade, Profit Factor, Expectancy, SQN (System Quality Number), Kelly Criterion。SQN 由 Van Tharp 提出, 综合考虑交易次数、平均盈亏和盈亏标准差。Kelly Criterion 基于胜率和盈亏比计算最优仓位比例。
-
-`_Stats(pd.Series)` 子类仅重写了 `__repr__` 方法, 通过 `pd.option_context` 临时调整显示精度和列宽, 使打印输出更紧凑友好。
+`compute_stats()` 输出约 30 项统计指标, 覆盖基础信息 (起止时间, 持仓暴露), 收益 (累计收益, 年化收益, 买入持有基准, CAGR), 风险 (夏普比率, 索提诺比率, 卡尔玛比率, 最大回撤及持续期, Alpha/Beta), 以及交易表现 (胜率, 盈亏因子, SQN, 凯利准则)。年化收益使用几何平均日收益的复利公式计算, 而非简单的算术平均年化; 计算过程中通过数据频率自动选择合适的年化因子 (252/365/12/52/1)。`compute_drawdown_duration_peaks()` 通过定位回撤为零的基准点将序列切分为回撤区间, 再统计每个区间的持续时间和最大幅度。
 
 ### 7.5 backtesting/_plotting.py 与 autoscale_cb.js -- 可视化模块
 
-`_plotting.py` 使用 Bokeh 库生成交互式 HTML 图表。`plot()` 函数是图表的组装中心, 内部定义了 7 个内部子函数, 分别负责:
+`_plotting.py` 基于 Bokeh 库, 将回测结果组装为多面板的 gridplot 布局。7 个内部绘制函数分别负责 OHLC K 线, 权益曲线 (含峰值/终值/回撤标注), 回撤百分比曲线, P/L 盈亏三角形标记, 成交量柱状图, 大周期叠加 K 线以及策略指标 (区分 overlay 和独立子图)。`LegendStr(str)` 子类通过自定义 `__eq__` (按对象标识比较) 解决了 Bokeh 默认合并同名字符串图例项的问题。所有子图共享 `CrosshairTool` 实现统一的十字光标。
 
-- `_plot_ohlc()`: 主 OHLC K 线图, 用竖线表示 High-Low 区间, 彩色柱表示涨跌。
-- `_plot_equity_section()`: 权益曲线, 标注峰值、终值和最大回撤区间。
-- `_plot_drawdown_section()`: 回撤百分比独立子图。
-- `_plot_pl_section()`: 每笔交易的盈亏标记, 用三角形表示盈亏方向。
-- `_plot_volume_section()`: 成交量柱状图, 显示 X 轴时间标签。
-- `_plot_superimposed_ohlc()`: 叠加更大周期的半透明 K 线, 辅助判断大趋势。
-- `_plot_indicators()`: 策略指标, overlay 型画在 K 线图上, 独立型画在单独子图。
-
-所有子图通过 `gridplot` 垂直堆叠, 共享 X 轴范围。`LegendStr(str)` 子类通过自定义 `__eq__` (按对象标识比较而非字符串内容) 解决了 Bokeh 默认合并同名字符串图例项的问题。`CrosshairTool` 为所有子图添加统一的十字光标。
-
-`autoscale_cb.js` 是嵌入 HTML 的 JavaScript 回调。当用户平移或缩放 X 轴时, 浏览器端自动计算可视区域内的最高/最低价格, 调整 OHLC 图表的 Y 轴范围, 使 K 线始终充满图表区域。使用 `setTimeout(50ms)` 防抖避免频繁重绘。
+`autoscale_cb.js` 是嵌入 HTML 的 CustomJS 回调, 当用户平移或缩放 X 轴时, 浏览器端自动根据可视区域内的最高/最低价调整 OHLC Y 轴范围, 通过 50ms 的 `setTimeout` 防抖避免频繁重绘。
 
 ### 7.6 测试文件
 
-`backtesting/test/_test.py` 包含 76 个测试用例, 按功能分为 8 个 TestCase 子类:
-
-- `TestBacktest`: 验证回测引擎基本功能 -- 运行、数据验证、佣金计算、订单断言。
-- `TestStrategy`: 验证策略机制 -- 仓位、对冲模式、exclusive_orders、订单 tag。
-- `TestOptimize`: 验证参数优化 -- 网格搜索、SAMBO、约束、热力图。
-- `TestPlot`: 验证图表生成 -- 各种参数组合、时间分辨率、指标命名和颜色。
-- `TestLib`: 验证工具库 -- crossover、resample_apply、SignalStrategy、TrailingStrategy。
-- `TestUtil`: 验证内部工具 -- _as_str、patch、_Array 访问器。
-- `TestDocs`: 验证文档 -- docstring 和 README 中的统计字段完整性。
-- `TestRegressions`: 回归测试 -- 针对已修复的 GitHub issue 的防护用例。
-
-在约束环境 (`pandas<3`) 下, 全部 76 项测试通过, 1 项跳过 (`test_examples`, 因 `doc/` 目录已删除)。
+`backtesting/test/_test.py` 包含 76 个测试用例, 按功能分为 8 个 TestCase 子类, 分别验证回测引擎基本功能, 策略机制, 参数优化, 图表生成, 工具库函数, 内部工具, 文档完整性和已修复 GitHub issue 的回归防护。在约束环境 (`pandas<3`) 下, 全部 76 项测试通过, 1 项跳过 (`test_examples`, 因 `doc/` 目录已被删除)。
 
 ## 8. 运行结果、可视化与测试验证
 
 ### 8.1 回测统计输出
 
-`python run_demo.py` 在终端输出以下统计结果 (约 30 项):
-
-- Start/End/Duration: 回测起止时间和总历时 (3116 天)
-- Exposure Time [%]: 持仓暴露时间占比
-- Equity Final/Peak [$]: 最终权益和峰值权益
-- Return [%] / Buy & Hold Return [%]: 策略收益和买入持有基准收益
-- Return (Ann.) [%] / Volatility (Ann.) [%]: 年化收益率和年化波动率
-- Sharpe Ratio / Sortino Ratio / Calmar Ratio: 三项风险调整收益指标
-- Max. Drawdown [%] / Avg. Drawdown [%]: 最大回撤和平均回撤
-- # Trades / Win Rate [%]: 交易次数和胜率
-- Profit Factor / Expectancy [%] / SQN / Kelly Criterion: 交易质量指标
+`python run_demo.py` 输出包含以下统计指标 (约 30 项): Start/End/Duration (回测时间范围), Exposure Time (持仓暴露比例), Equity Final/Peak (最终和峰值权益), Return / Buy & Hold Return (策略收益 vs 买入持有基准), Return (Ann.) / Volatility (Ann.) (年化收益和波动率), Sharpe/Sortino/Calmar Ratio (三项风险调整收益), Max Drawdown / Avg Drawdown (最大和平均回撤), # Trades / Win Rate (交易次数和胜率), Profit Factor / Expectancy / SQN / Kelly Criterion (交易质量综合指标)。
 
 ### 8.2 HTML 可视化
 
-`sma_cross_result.html` 是一个完全交互式的 Bokeh 图表, 从上到下依次展示:
-
-- 权益曲线 (含峰值/终值标记和最大回撤区间)
-- P/L 盈亏标记 (每笔交易的三角形标记)
-- 主 OHLC K 线图 (叠加 SMA(10)/SMA(20) 均线)
-- 成交量柱状图
-
-用户可以在浏览器中对图表进行平移、缩放、悬停查看详情, 支持保存为 PNG 等交互操作。
+`sma_cross_result.html` 是一个可交互的 Bokeh 图表, 从上到下依次展示权益曲线 (含峰值/终值标记和最大回撤区间), P/L 盈亏标记 (每笔交易的三角形标记, 绿色表示盈利, 红色表示亏损), 主 OHLC K 线图 (叠加 SMA(10) 和 SMA(20) 均线), 以及成交量柱状图。用户可在浏览器中对图表进行平移, 缩放和悬停查看详情。
 
 ![sma_cross_result.html 交互式可视化结果](report_assets/03_html_plot.png)
 
@@ -371,45 +326,43 @@ def __getattr__(self, item):
 
 ## 9. 代码规范调整说明
 
-本次复现过程中的代码规范调整以注释规范、运行入口、环境约束和范围说明为主, 未改变核心回测逻辑:
+本次复现中的规范调整以注释体系, 运行入口, 环境约束和范围说明为主, 未触及核心回测逻辑:
 
-1. **注释规范**: 新增 `ANNOTATION_GUIDE.md`, 统一注释的三层覆盖要求 (功能层/设计层/上下文层) 和约束规则 (不修改函数名/类名/导入路径, 不改变核心逻辑, 不改 README/LICENSE/CSV, 不将中文注释放入字符串/CSV 体内, 每批注释后运行验证)。
-2. **运行入口**: 新增 `run_demo.py`, 使用 GOOG 日线数据和 SMA 交叉策略, 作为最小可运行示例。
-3. **环境约束**: 新增 `constraints.txt`, 锁定 `pandas<3` 以避免 pandas 3.x 下 FractionalBacktest 的上游兼容性问题。
-4. **范围说明**: 新增 `COURSEWORK_SCOPE.md`, 明确文件分类 (核心源码/工程配置/辅助交付件/保留原貌) 和注释范围。
-5. **规模统计**: 新增 `tools/count_lines.py` 和 `line_count_report.txt`, 统计纳入注释的 19 个文件的行数 (5018 行 / 4248 非空行)。
-6. **未修改内容**: 未改变任何函数名、类名、变量语义或导入路径。未修改核心回测逻辑。未修改 README、LICENSE 和 CSV 数据文件。
+1. **注释规范**: 新增 `ANNOTATION_GUIDE.md`, 统一三层覆盖要求 (功能层, 设计层, 上下文层) 和约束规则 (不修改标识符, 不改变核心逻辑, 不改 README/LICENSE/CSV, 不将注释放入数据文件, 每批注释后运行验证)。
+2. **运行入口**: 新增 `run_demo.py`, 基于 GOOG 日线数据和 SMA 交叉策略, 提供最小可运行示例。
+3. **环境约束**: 新增 `constraints.txt`, 锁定 `pandas<3` 以避开 pandas 3.x 下 `FractionalBacktest` 的只读数组兼容性问题。
+4. **范围说明**: 新增 `COURSEWORK_SCOPE.md`, 以文件分类形式明确注释范围和保留原貌的文件及其理由。
+5. **规模统计**: 新增 `tools/count_lines.py` 和 `line_count_report.txt`, 以可复现的方式统计纳入注释的 19 个文件的代码规模。
+6. **未变更项**: 函数名, 类名, 变量名和导入路径均保持原样。回测核心逻辑 (Strategy, _Broker, Backtest 的执行和撮合过程) 未作任何修改。README, LICENSE 和 CSV 数据文件保持原貌。
 
 ## 10. 问题与解决方案
 
 ### 10.1 pandas 3.x 兼容性问题
 
-**问题**: 在 pandas 3.0 及以上版本环境中, `FractionalBacktest.run()` 方法对只读 NumPy 数组执行原地除法 (`indicator /= self._fractional_unit`), 抛出 `ValueError: output array is read-only`。该问题源于 pandas 3.x 对 DataFrame 列的底层数组实施了更严格的写保护。
+在 pandas 3.0 及以上版本环境中, `FractionalBacktest.run()` 方法对只读 NumPy 数组执行原地除法 (`indicator /= self._fractional_unit`), 抛出 `ValueError: output array is read-only`。该问题源于 pandas 3.x 对 DataFrame 列的底层数组实施了更严格的写保护。
 
-**解决**: 新增 `constraints.txt`, 约 `pandas<3`。在 `REPORT_DRAFT.md` 和 `COURSEWORK_SCOPE.md` 中记录该问题及解决方法。约束后环境安装 pandas 2.3.3, `python -m backtesting.test` 全部 76 项测试通过。
+解决方案为新增 `constraints.txt`, 约束 `pandas<3`。约束后环境安装 pandas 2.3.3, `python -m backtesting.test` 全部 76 项测试通过。这一问题也说明真实开源项目在不同版本的依赖环境中可能出现意料之外的行为, 锁定复现环境是保证实验结果可重复的常见做法。
 
-### 10.2 README、LICENSE、CSV 是否要注释
+### 10.2 README, LICENSE, CSV 是否应原地注释
 
-**问题**: 课程大作业要求"对每一行、每一个关键块提供中文注释"。但 README.md 是原项目说明文档, 注释会破坏原始语义; LICENSE.md 是法律文本, 不应被修改; CSV 数据文件中插入中文会导致 pandas `read_csv` 解析失败, 破坏 `run_demo.py` 和测试套件的运行。
+课程要求"对每一行, 每一个关键块提供中文注释"。但 README.md 是原作者的技术文档, 在其中插入中文注释会破坏其作为独立文档的可读性; LICENSE.md 是法律文本, 不应做任何修改; CSV 文件中插入非 CSV 格式的文本会直接导致 pandas 的 `read_csv` 解析失败, 使 `run_demo.py` 和整个测试套件无法运行。
 
-**解决**: 在 `ANNOTATION_GUIDE.md` 的约束规则中明确这三类文件不原地注释, 在 `COURSEWORK_SCOPE.md` 和本报告中解释保留原貌的原因。这些文件的作用通过辅助文档说明, 而非在文件内部插入注释。
+因此, 这三类文件的注释方式改为在辅助文档中说明其内容和作用, 而非在文件内部原地插入注释。`ANNOTATION_GUIDE.md` 的约束规则和 `COURSEWORK_SCOPE.md` 的范围说明中均对此做了明确记录。
 
 ### 10.3 精简仓库与完整工程的平衡
 
-**问题**: Backtesting.py 的原始仓库包含 GitHub Actions CI 配置 (`.github/`)、文档站 (`doc/`)、贡献指南 (`CONTRIBUTING.md`)、变更日志 (`CHANGELOG.md`)、覆盖率配置 (`.codecov.yml`) 等维护内容。全量注释这些文件工作量过大且偏离课程核心 -- 回测框架的 Python 源码设计和工程结构。
+Backtesting.py 的原始仓库包含 GitHub Actions CI 配置 (`.github/`), 文档站 (`doc/`), 贡献指南 (`CONTRIBUTING.md`), 变更日志 (`CHANGELOG.md`) 和覆盖率服务配置 (`.codecov.yml`) 等内容。这些文件是开源项目维护所必需的, 但与本次课程的目标 -- 分析回测框架的 Python 源码设计和工程结构 -- 关联不大。全量注释这些文件既超出合理的工作量, 也无法产生有意义的分析内容。
 
-**解决**: 保留核心源码、测试代码、示例数据、工程配置文件和最小运行示例, 删除 CI 配置、文档站、变更日志、贡献指南和覆盖率服务配置。保留的 19 个文件覆盖了 Python 工程的核心层次, 删除的非核心维护内容在 `COURSEWORK_SCOPE.md` 中说明。
+处理方式为保留核心源码, 测试代码, 示例数据, 工程配置文件和最小运行示例, 删除 CI 配置, 文档站, 变更日志和贡献指南。最终保留的 19 个文件覆盖了 Python 工程的完整层次, 删除的非核心内容在 `COURSEWORK_SCOPE.md` 中予以说明。
 
 ## 11. 总结
 
-做完这轮复现和注释, 我最大的感受是: 以前学 Python 高级特性的时候都是在教材上做小练习, 而这次是在一个真实的、能跑起来的工程里看它们怎么被用起来。
+本轮复现和注释工作的核心收获不在于"注释了多少行代码", 而在于通过逐行阅读一个真实的, 在生产环境中被广泛使用的 Python 工程, 观察到了高级语言特性如何被用来解决具体的工程设计问题。
 
-**关于工程复现**: 从 GitHub clone 下来、搭 conda 环境、装依赖、跑 `run_demo.py`, 整个流程比我想象的顺利。唯一的坑是 pandas 3.x 下 FractionalBacktest 报 `output array is read-only`, 一开始以为是自己的环境问题, 后来发现是上游已知的兼容性 bug。加了 `constraints.txt` 锁定 `pandas<3` 就解决了, 这也让我意识到真实工程里依赖管理是个需要认真对待的事。
+`ABCMeta` 元类在这里不是教材上的一句概念, 而是保证"用户把策略类写对才能实例化"这一行为约束的精确工具。`_Array` 的 ndarray 子类化不是为了"定义一个自定义数组类型", 而是为了在回测热路径上同时获得 NumPy 的向量化计算性能和上层功能所需的元数据支持。`@contextmanager` 和 `__enter__/__exit__` 分别以函数式和类式两种形式管理临时状态和系统资源, 与多进程优化中的共享内存生命周期直接关联。
 
-**关于注释**: 19 个文件从头读到尾, 核心引擎的 `_process_orders()` 是最难啃的部分 -- 止损、限价、市价、OCO 条件单搅在一起, 同一根 K 线内还要处理"止损和限价谁先触发"这种悲观假设。我给它画了流程图在脑子里才理顺。相比之下, `_stats.py` 里那些金融公式虽然看着吓人, 但每个公式在网上都能查到定义, 注释起来反而有迹可循。
+核心引擎的 `_process_orders()` 是理解回测精度问题的关键: 止损和限价在同一 K 线内触发时的悲观假设, 新产生的 SL/TP 订单可能在同一周期内被递归处理, 比例仓位到实际股数转换中的保证金不足保护, 这些细节共同构成了一个在严谨性和实用性之间取得平衡的撮合模型。
 
-**关于 Python 高级特性**: 对我启发最大的是 `_Array` 的 ndarray 子类化。以前觉得子类化 ndarray 是为了"自定义一个数组类型", 现在看来完全不是这回事 -- `_Array` 的目的是在不牺牲 NumPy 向量化计算速度的前提下, 给数组挂上 `.name` 和绘图参数, 让回测热路径上绕过 pandas 的性能开销。一个技术选择背后是性能、可维护性和 API 易用性的综合权衡。
+76 个测试用例全部通过验证了注释工作未引入回归。每批注释后运行 `python run_demo.py` 和 `python -m backtesting.test` 的习惯, 在整个过程中多次及时发现了格式问题, 避免了积累到最后才暴露的调试困境。
 
-**关于测试**: 76 个测试用例全部通过。每改完一批注释就跑一遍 `python run_demo.py` 和 `python -m backtesting.test`, 这个习惯让我在注释过程中几次及时发现格式问题, 避免积累到最后才发现某个文件的注释写坏了语法。
-
-如果继续做下去, 我可能会尝试用 `Backtest.optimize()` 给 SmaCross 找最优的快慢均线参数, 对比网格搜索和 SAMBO 贝叶斯优化的效率, 或者在上面实现一个自己的策略来验证框架的泛化能力。
+如果继续深入, 可能的扩展方向包括: 利用 `Backtest.optimize()` 对 SmaCross 策略进行系统的参数优化并分析热力图, 实现额外的自定义策略以验证框架的泛化程度, 或者对比网格搜索与 SAMBO 贝叶斯优化在同一策略上的收敛效率差异。
