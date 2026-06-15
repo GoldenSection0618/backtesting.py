@@ -4,7 +4,7 @@
 
 我选择 [Backtesting.py](https://github.com/kernc/backtesting.py) 作为本次大作业的复现和注释对象。它是 GitHub 上一个开源的 Python 金融策略回测框架, 截至 2026 年 6 月已有 8000+ stars, 符合课程推荐从高关注度项目中选题的建议。用它回测策略很简单: 继承 `Strategy` 基类, 实现 `init()` 和 `next()` 两个方法, 框架就会按 K 线顺序把历史数据喂给你, 你只需写买卖逻辑即可。
 
-为什么选它而不是其他项目? 主要有四点考虑:
+选题的时候我在 GitHub 上翻了不少项目, 最后定 Backtesting.py 是因为:
 
 1. **规模刚好**: 我纳入注释的 19 个文件加起来一共 5018 行、4248 非空行, 比课程要求的"约 2000 行"高出不少但又不会大到读不完。读源码的过程中我发现这个体量刚刚好 -- 核心引擎逻辑集中在前几百行, 工具模块各司其职, 不会迷失在代码海洋里。
 2. **高级特性密集**: 光是读 `Strategy` 类的定义就看到 `ABCMeta` 元类和 `@abstractmethod`, 往下翻 `_util.py` 里 `_Array` 直接继承 `np.ndarray`, `lib.py` 里 `random_ohlc_data()` 是个无限生成器, `resample_apply()` 用 `inspect.currentframe()` 做调用栈自省。这些不是教材里孤立的示例, 而是为了解决具体工程问题而出现的。
